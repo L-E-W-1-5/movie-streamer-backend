@@ -1,5 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config();//{path: '../../.env'}
+import './config.js'
 import express, { type Express, type Request, type Response , type Application } from 'express';
 import cors from 'cors';
 import morgan from "morgan";
@@ -7,10 +6,11 @@ import multer from 'multer';
 import mime from 'mime-types'
 import { putObject } from './util/putObject.js';
 
-console.log('cwd', process.cwd())
-
-
 const app: Application = express();
+
+app.use(cors());
+
+app.use(morgan('dev'));
 
 const port = process.env.PORT || 3001;
 
@@ -21,9 +21,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 * 1024 } // e.g., 10 GB limit
 });
 
-app.use(cors());
 
-app.use(morgan('dev'));
 
 
 app.get('/', (req: Request, res: Response) => {
@@ -34,7 +32,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.post('/upload', upload.single('movie'), async (req: Request,  res: Response) => {
 
-  console.log(process.env.REGION)
+  console.log("38", process.env.REGION)
 
   const title = req.body.title;
 
@@ -57,7 +55,17 @@ app.post('/upload', upload.single('movie'), async (req: Request,  res: Response)
 
   console.log("63", mimeType, title, file);
 
-  const result = await putObject(file.buffer, title, mimeType);
+  let result
+
+  try{
+
+    result = await putObject(file.buffer, title, mimeType);
+
+  }catch(err){
+    
+    console.log(err)
+  }
+
 
   console.log("67", result);
 

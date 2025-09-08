@@ -1,7 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 
-console.log(process.env.REGION)
-console.log('cwd', process.cwd())
+
 if (!process.env.REGION || !process.env.ACCESS_KEY || !process.env.SECRET_KEY) {
   throw new Error('Missing AWS configuration in environment variables');
 }
