@@ -4,8 +4,9 @@ import cors from 'cors';
 import morgan from "morgan";
 import multer from 'multer';
 import mime from 'mime-types'
-//import pool from './database/db.js';
 import { putObject } from './util/putObject.js';
+import { addMovie, getMovies } from './database/models.js'
+//import { movieUpload } from './controllers/movieUpload.js'
 //import { createMovieTable, checkTableExists } from './database/createTables.js'
 
 const app: Application = express();
@@ -32,6 +33,34 @@ app.get('/', (req: Request, res: Response) => {
 
 });
 
+app.get('/movies', async (req:Request, res: Response) => {
+
+  let movies
+
+  try{
+
+    movies = await getMovies()
+
+  }catch(err){
+
+    console.log(err);
+  }
+
+  console.log(movies)
+
+  if(!movies) res.send({
+    payload: "failed to load movies",
+    success: false
+  })
+
+  res.send({
+    payload: movies,
+    success: true
+  })
+})
+
+
+
 app.post('/upload', upload.single('movie'), async (req: Request,  res: Response) => {
 
   const title = req.body.title;
@@ -40,15 +69,18 @@ app.post('/upload', upload.single('movie'), async (req: Request,  res: Response)
 
   if(!title || !file){
 
+
     return res.status(400).send({
       payload: "all fields required",
       url: "",
       key: "",
       status: "error"
     });
+
   };
 
   const mimeType = mime.lookup(file.originalname) || 'video/mp4';
+
 
   let result
 
@@ -61,8 +93,6 @@ app.post('/upload', upload.single('movie'), async (req: Request,  res: Response)
     console.log(err)
   }
 
-//TODO: call to database here, url and metadata
-//id, title, url, key, type or genre, something to divide them for display
   if(!result){
 
     return res.status(400).send({
@@ -73,7 +103,8 @@ app.post('/upload', upload.single('movie'), async (req: Request,  res: Response)
     })
   }
 
-//TODO: wont need to return the movie once uploaded
+  addMovie(title, result.url, "test");
+
   res.status(200).send({
     payload: "movie uploaded",
     url: result.url,

@@ -22,12 +22,16 @@ export async function createMovieTable() {
 
 
 export async function checkTableExists() {
-  const result = await pool.query(`
-    SELECT to_regclass('public.movies') AS table_exists;
-  `);
-  if (result.rows[0].table_exists) {
-    console.log('Table exists!');
-  } else {
-    console.log('Table does not exist.');
-  }
+
+    const result = await pool.query(`
+        SELECT to_regclass('public.movies') AS table_exists;
+    `);
+
+    if (result.rows[0].table_exists) {
+
+        console.log('Table exists!');
+    } else {
+
+        console.log('Table does not exist.');
+    }
 }
