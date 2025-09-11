@@ -4,7 +4,9 @@ import cors from 'cors';
 import morgan from "morgan";
 import multer from 'multer';
 import mime from 'mime-types'
+//import pool from './database/db.js';
 import { putObject } from './util/putObject.js';
+//import { createMovieTable, checkTableExists } from './database/createTables.js'
 
 const app: Application = express();
 
