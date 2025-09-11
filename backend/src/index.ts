@@ -34,15 +34,11 @@ app.get('/', (req: Request, res: Response) => {
 
 app.post('/upload', upload.single('movie'), async (req: Request,  res: Response) => {
 
-  console.log("38", process.env.REGION)
-
   const title = req.body.title;
 
   const file = req.file;
 
   if(!title || !file){
-
-    console.log("52", file, title);
 
     return res.status(400).send({
       payload: "all fields required",
@@ -50,12 +46,9 @@ app.post('/upload', upload.single('movie'), async (req: Request,  res: Response)
       key: "",
       status: "error"
     });
-
   };
 
   const mimeType = mime.lookup(file.originalname) || 'video/mp4';
-
-  console.log("63", mimeType, title, file);
 
   let result
 
@@ -68,9 +61,8 @@ app.post('/upload', upload.single('movie'), async (req: Request,  res: Response)
     console.log(err)
   }
 
-
-  console.log("67", result);
-
+//TODO: call to database here, url and metadata
+//id, title, url, key, type or genre, something to divide them for display
   if(!result){
 
     return res.status(400).send({
@@ -81,6 +73,7 @@ app.post('/upload', upload.single('movie'), async (req: Request,  res: Response)
     })
   }
 
+//TODO: wont need to return the movie once uploaded
   res.status(200).send({
     payload: "movie uploaded",
     url: result.url,
