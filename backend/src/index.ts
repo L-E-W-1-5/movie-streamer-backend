@@ -6,10 +6,14 @@ import multer from 'multer';
 import mime from 'mime-types'
 import { putObject } from './util/putObject.js';
 import { addMovie, getMovies } from './database/models.js'
+import userRouter from './routes/user_routes.js'
 //import { movieUpload } from './controllers/movieUpload.js'
-//import { createMovieTable, checkTableExists } from './database/createTables.js'
+//import { createUsersTable, checkTableExists } from './database/createTables.js'
+//import { randomBytes } from 'crypto';
 
 const app: Application = express();
+
+app.use(express.json());
 
 app.use(cors());
 
@@ -24,6 +28,11 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 * 1024 } // e.g., 10 GB limit
 });
 
+// const randomCode = () => {
+//   const code = randomBytes(64).toString('hex');
+//   console.log(code);
+// }
+// randomCode();
 
 
 
@@ -59,6 +68,8 @@ app.get('/movies', async (req:Request, res: Response) => {
   })
 })
 
+
+app.use('/users', userRouter);
 
 
 app.post('/upload', upload.single('movie'), async (req: Request,  res: Response) => {

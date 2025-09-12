@@ -21,10 +21,31 @@ export async function createMovieTable() {
 };
 
 
+export const createUsersTable = async() => {
+
+    try{
+
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                guid UUID,
+                is_admin BOOLEAN DEFAULT FALSE
+            );`
+        )
+
+    }catch(err){
+
+        console.log(err)
+    }
+}
+
+
 export async function checkTableExists() {
 
     const result = await pool.query(`
-        SELECT to_regclass('public.movies') AS table_exists;
+        SELECT to_regclass('public.users') AS table_exists;
     `);
 
     if (result.rows[0].table_exists) {
