@@ -11,7 +11,7 @@ export const addMovie = async (title: string, url: string, genre: string) => {
 
     console.log(createMovieEntry)
 
-    return createMovieEntry.rows;
+    return createMovieEntry.rows[0];
 }
 
 
