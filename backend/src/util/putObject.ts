@@ -26,7 +26,7 @@ export const putObject = async(file:Buffer, fileName:string, mimeType:string) =>
     
         let url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${params.Key}`
 
-        console.log(url);
+        console.log("putObject 29", url);
 
         return {url, key:params.Key};
 

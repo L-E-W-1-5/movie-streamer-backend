@@ -1,0 +1,116 @@
+import express, { type Express, type Request, type Response , type Application } from 'express';
+import { addMovie, getMovies } from '../database/movie_models.js'
+import { putObject } from '../util/putObject.js';
+import multer from 'multer';
+import mime from 'mime-types'
+
+
+const movieRouter = express.Router();
+
+const storage = multer.memoryStorage();
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 * 1024 } // e.g., 10 GB limit
+});
+
+
+movieRouter.get('/', async (req:Request, res: Response) => {
+
+  let movies
+
+  try{
+
+    movies = await getMovies()
+
+  }catch(err){
+
+    console.log(err);
+  }
+
+  console.log(movies)
+
+  if(!movies) res.send({
+    payload: "failed to load movies",
+    status: "error"
+  })
+
+  res.send({
+    payload: movies,
+    status: "success"
+  })
+});
+
+
+movieRouter.post('/movies', upload.single('movie'), async (req: Request,  res: Response) => {
+
+  const title = req.body.title;
+
+  const file: Express.Multer.File | undefined = req.file;
+
+  if(!title || typeof title !== 'string' || !file){
+
+
+    return res.status(400).json({
+      payload: "all fields required",
+      status: "error"
+    });
+
+  };
+
+  const mimeType = mime.lookup(file.originalname) || 'video/mp4';
+
+  console.log(`uploading file with MIME type ${mimeType}`);
+
+  let result;
+
+  try{
+
+    result = await putObject(file.buffer, title, mimeType);
+
+  }catch(err){
+    
+    console.log(err);
+
+    return res.status(500).json({
+      payload: "Upload failed due to server error",
+      status: "error"
+    })
+  }
+
+  if(!result){
+
+    return res.status(500).send({
+      payload: "upload failed",
+      status: "error"
+    })
+  }
+
+  try{
+
+    addMovie(title, result.url, "test");
+  
+  }catch(err){
+
+    console.log(err);
+
+    return res.status(500).json({
+      payload: "movie uploaded to s3 but failed to save to database",
+      url: result.url,
+      key: result.key,
+      status: "error"
+    })
+  }
+
+
+  res.status(201).send({
+    payload: "movie uploaded",
+    url: result.url,
+    key: result.key,
+    status: "success"
+  });
+
+});
+
+
+export default movieRouter

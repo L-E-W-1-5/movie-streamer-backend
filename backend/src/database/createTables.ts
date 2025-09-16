@@ -31,12 +31,29 @@ export const createUsersTable = async() => {
                 name VARCHAR(255) NOT NULL,
                 email VARCHAR(255) NOT NULL,
                 guid UUID,
-                is_admin BOOLEAN DEFAULT FALSE
+                is_admin BOOLEAN DEFAULT FALSE,
+                is_verified BOOLEAN DEFAULT FALSE
             );`
         )
 
     }catch(err){
 
+        console.log(err)
+    }
+}
+
+
+export const dropTable = async () => {
+
+console.log("drop table")
+
+    try{
+
+        await pool.query(`
+                DROP TABLE users   
+            `)
+
+    }catch(err){
         console.log(err)
     }
 }

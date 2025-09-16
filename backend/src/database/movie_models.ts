@@ -12,16 +12,14 @@ export const addMovie = async (title: string, url: string, genre: string) => {
     console.log(createMovieEntry)
 
     return createMovieEntry.rows[0];
-}
+};
 
 
 export const getMovies = async () => {
-//console.log("allmovies")
+
     const allMovies = await pool.query(`
             SELECT * FROM movies
         `)
 
-    //console.log(allMovies.rows)
-
     return allMovies.rows;
-}
+};
