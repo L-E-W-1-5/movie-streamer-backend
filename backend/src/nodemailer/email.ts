@@ -20,7 +20,10 @@ export const sendMailToUser = async (guid:string, email:string) => {
             from: process.env.EMAIL,
             to: email,
             subject: subject,
-            text: `You have been accepted to join LuluFlix, all you need to do is login with this code each time.. \n <b>${guid}</b> \nWe understand you have a choice of streaming services and are happy you chose us. Many thanks from the LuluFlix team :)`
+            html: `<p>You have been accepted to join LuluFlix, all you need to do is login with this code each time..</p>
+                   <p><b>${guid}</b></p>
+                   <p>We understand you have a choice of streaming services and are happy you chose us.</p>
+                   <p>Many thanks from the LuluFlix team :)</p>`
         }, function(error, info){
 
             if(error){
@@ -65,7 +68,9 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
             from: process.env.EMAIL,
             to: "lewiswootton88@gmail.com",
             subject: "new user request",
-            text: `a new user: \n${name}\n has registered on luluflix with an email of:\n ${email}\n Click this link to accept them \n<b>${url}?token=${id}</b>`
+            html: `<p>A new user: ${name}, has registered on luluflix with an email of: ${email}</p>
+                    <p>Click this link to accept them..</p>
+                    <p><b>${url}?token=${id}</b></p>`
         })
     }catch(err){
         console.log(err)
