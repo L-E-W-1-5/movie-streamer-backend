@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-const url = `http://localhost:3001/users/verify_user`
+const url = 'https://movie-streamer-backend.onrender.com/users/verify_user';
 
 export const sendMailToUser = async (guid:string, email:string) => {
 
@@ -20,7 +20,7 @@ export const sendMailToUser = async (guid:string, email:string) => {
             from: process.env.EMAIL,
             to: email,
             subject: subject,
-            text: `You have been accepted to join LuluFlix, all you need to do is login with this code each time ${guid}. We understand you have a choice of streaming services and are happy you chose us. Many thanks from the LuluFlix team :)`
+            text: `You have been accepted to join LuluFlix, all you need to do is login with this code each time.. \n <b>${guid}</b> \nWe understand you have a choice of streaming services and are happy you chose us. Many thanks from the LuluFlix team :)`
         }, function(error, info){
 
             if(error){
@@ -65,7 +65,7 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
             from: process.env.EMAIL,
             to: "lewiswootton88@gmail.com",
             subject: "new user request",
-            text: `a new user, ${name}, has registered on luluflix with an email of: ${email}. Click this link to accept them ${url}?token=${id}`
+            text: `a new user: \n${name}\n has registered on luluflix with an email of:\n ${email}\n Click this link to accept them \n<b>${url}?token=${id}</b>`
         })
     }catch(err){
         console.log(err)
