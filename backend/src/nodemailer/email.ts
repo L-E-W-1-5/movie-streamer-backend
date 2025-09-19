@@ -2,6 +2,8 @@ import nodemailer from 'nodemailer';
 
 const url = 'https://movie-streamer-backend.onrender.com/users/verify_user';
 
+
+//email sent to a newly verified user
 export const sendMailToUser = async (guid:string, email:string) => {
 
     const subject = "Login Details For LuluFlix";
@@ -49,7 +51,7 @@ export const sendMailToUser = async (guid:string, email:string) => {
   
 }
 
-
+// email sent to admin to verify a new user registration
 export const sendMailToAdmin = async (name:string, email:string, id:string) => {
 
     console.log("54", email, name, id)

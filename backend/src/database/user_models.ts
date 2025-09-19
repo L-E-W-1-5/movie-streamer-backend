@@ -4,7 +4,6 @@ import pool from './db.js'
 
 export const addUser = async (name:string, email:string, guid:string) => {
     
-
     const is_admin = false;
 
     const is_verified = false;
@@ -46,7 +45,7 @@ export const findUser = async (input:string) => {
 };
 
 
-export const updateUser = async (input:string) => {
+export const updateUserVerifiction = async (input:string) => {
 
     const newVerification = true;
 
@@ -56,6 +55,21 @@ export const updateUser = async (input:string) => {
             WHERE id = $1
             RETURNING *
         `, [input, newVerification])
+
+    return updatedUser.rows[0];
+}
+
+
+export const updateUserAdmin = async (input:string) => {
+
+    const isAdmin = true;
+
+    const updatedUser = await pool.query(`
+            UPDATE users
+            SET is_admin = $2
+            WHERE id = $1
+            RETURNING * 
+        `, [input, isAdmin]);
 
     return updatedUser.rows[0];
 }

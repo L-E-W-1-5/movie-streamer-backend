@@ -8,7 +8,7 @@ export async function createMovieTable() {
         await pool.query(
             `CREATE TABLE IF NOT EXISTS movies (
             id SERIAL PRIMARY KEY, 
-            name VARCHAR(255) NOT NULL, 
+            title VARCHAR(255) NOT NULL, 
             url TEXT NOT NULL, 
             genre VARCHAR(50)
             );`
@@ -43,6 +43,26 @@ export const createUsersTable = async() => {
 }
 
 
+export const createMessagesTable = async () => {
+
+    try{
+
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(255),
+                userid VARCHAR(255),
+                timestamp VARCHAR(30),
+                message TEXT
+            );`
+        );
+    }catch(err){
+
+        console.log(err);
+    }
+};
+
+
 export const dropTable = async () => {
 
 console.log("drop table")
@@ -50,7 +70,7 @@ console.log("drop table")
     try{
 
         await pool.query(`
-                DROP TABLE users   
+                DROP TABLE movies   
             `)
 
     }catch(err){
@@ -62,7 +82,7 @@ console.log("drop table")
 export async function checkTableExists() {
 
     const result = await pool.query(`
-        SELECT to_regclass('public.users') AS table_exists;
+        SELECT to_regclass('public.movies') AS table_exists;
     `);
 
     if (result.rows[0].table_exists) {

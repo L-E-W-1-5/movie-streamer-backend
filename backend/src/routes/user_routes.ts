@@ -1,47 +1,27 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addUser, getUsers, findUser, updateUser } from '../database/user_models.js'
+import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin } from '../database/user_models.js'
 import { sendMailToUser, sendMailToAdmin } from '../nodemailer/email.js';
 import { v4 as uuidv4 } from 'uuid'
 
 const userRouter = express.Router();
     
 
-userRouter.post('/newuser', async (req: Request, res: Response) => {
 
-    const { name, email } = req.body;
+// get all users
+userRouter.get('/', async (req: Request, res: Response) => {
 
-    const guid = uuidv4();
+    const allUsers = await getUsers();
 
-    let details
+    console.log("38", allUsers)
 
-
-    try{
-
-        details = await addUser(name, email, guid);
-
-    }catch(err){
-
-        console.log(err);
-
-        return res.status(500).json({
-            payload: "failed to create user in database",
-            status: "error"
-        })
-    }
-
-    console.log("34", details)
-    
-    await sendMailToAdmin(name, email, details.id)
-
-    return res.status(201).json({
-        payload: "user added, awaiting verification from admin",
-        status: "success"
+    res.status(200).json({
+        status: "success",
+        payload: allUsers
     })
-
 });
 
-
-userRouter.get('/verify_user', async (req, res) => {
+// this is the endpoint for the link in the email sent to admin for user verification 
+userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
     const tokenParam = req.query.token;
 
@@ -64,7 +44,7 @@ userRouter.get('/verify_user', async (req, res) => {
 
     if(userRecord){
 
-        confirmed = await updateUser(token);
+        confirmed = await updateUserVerifiction(token);
 
     }else{
 
@@ -99,9 +79,69 @@ userRouter.get('/verify_user', async (req, res) => {
         status: "success"
     })
 
+});
+
+
+userRouter.get('/create_admin', async (req:Request, res:Response) => {
+
+    const tokenParam = req.query.token;
+
+    const token = typeof tokenParam === 'string' ? tokenParam : undefined
+
+    if(!token){
+
+        return res.status(400).json({
+            payload: "no token in the request",
+            status: "error"
+        });
+    };
+
+    const isAdmin = await updateUserAdmin(token);
+
+    console.log(isAdmin)
+
+    return res.status(201).json({
+        payload: isAdmin,
+        status: "success"
+    })
 })
 
-//check if user has an account and is verified after login attempt
+// endpoint for new user registration
+userRouter.post('/newuser', async (req: Request, res: Response) => {
+
+    const { name, email } = req.body;
+
+    const guid = uuidv4();
+
+    let details
+
+
+    try{
+
+        details = await addUser(name, email, guid);
+
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(500).json({
+            payload: "failed to create user in database",
+            status: "error"
+        })
+    }
+
+    console.log("34", details)
+    
+    await sendMailToAdmin(name, email, details.id)
+
+    return res.status(201).json({
+        payload: "user added, awaiting verification from admin",
+        status: "success"
+    })
+
+});
+
+// check if user has an account and is verified after login attempt
 userRouter.post('/', async (req: Request, res: Response) => {
 
 
@@ -132,19 +172,6 @@ userRouter.post('/', async (req: Request, res: Response) => {
 })
 
 
-userRouter.get('/', async (req: Request, res: Response) => {
-
-    const allUsers = await getUsers();
-
-    console.log("38", allUsers)
-
-    res.status(200).json({
-        status: "success",
-        payload: allUsers
-    })
-})
-
-
 export default userRouter;
 
-//1757121a-8b09-460b-9768-fc480665265d
+//0e3ff365-5993-45fa-8206-fbf886651932

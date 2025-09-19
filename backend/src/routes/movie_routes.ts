@@ -11,10 +11,11 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 * 1024 } // e.g., 10 GB limit
+  limits: { fileSize: 10 * 1024 * 1024 * 1024 } // 10 GB limit
 });
 
 
+// fetch all movies at login 
 movieRouter.get('/', async (req:Request, res: Response) => {
 
   let movies
@@ -42,13 +43,16 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 });
 
 
-movieRouter.post('/movies', upload.single('movie'), async (req: Request,  res: Response) => {
+// upload new movie
+movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Response) => {
 
   const title = req.body.title;
 
+  const genre = req.body.genre;
+
   const file: Express.Multer.File | undefined = req.file;
 
-  if(!title || typeof title !== 'string' || !file){
+  if(!title || typeof title !== 'string' || !file || !genre || typeof genre !== 'string'){
 
 
     return res.status(400).json({
@@ -86,9 +90,11 @@ movieRouter.post('/movies', upload.single('movie'), async (req: Request,  res: R
     })
   }
 
+  let movieDatabaseRecord
+
   try{
 
-    addMovie(title, result.url, "test");
+    movieDatabaseRecord = await addMovie(title, result.url, genre);
   
   }catch(err){
 
@@ -103,10 +109,8 @@ movieRouter.post('/movies', upload.single('movie'), async (req: Request,  res: R
   }
 
 
-  res.status(201).send({
-    payload: "movie uploaded",
-    url: result.url,
-    key: result.key,
+  return res.status(201).send({
+    payload: movieDatabaseRecord,
     status: "success"
   });
 

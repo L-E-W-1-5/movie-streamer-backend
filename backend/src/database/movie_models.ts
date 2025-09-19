@@ -4,7 +4,7 @@ import pool from './db.js'
 export const addMovie = async (title: string, url: string, genre: string) => {
 
     const createMovieEntry = await pool.query(`
-            INSERT INTO movies (name, url, genre)
+            INSERT INTO movies (title, url, genre)
             VALUES ($1, $2, $3)
             RETURNING *;
         `, [title, url, genre]);
