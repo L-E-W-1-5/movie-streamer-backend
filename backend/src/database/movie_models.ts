@@ -18,7 +18,8 @@ export const addMovie = async (title: string, url: string, genre: string) => {
 export const getMovies = async () => {
 
     const allMovies = await pool.query(`
-            SELECT * FROM movies
+            SELECT * 
+            FROM movies
         `)
 
     return allMovies.rows;

@@ -29,7 +29,6 @@ movieRouter.get('/', async (req:Request, res: Response) => {
     console.log(err);
   }
 
-  console.log(movies)
 
   if(!movies) res.send({
     payload: "failed to load movies",

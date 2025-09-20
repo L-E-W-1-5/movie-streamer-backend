@@ -156,7 +156,8 @@ userRouter.post('/', async (req: Request, res: Response) => {
 
         return res.status(200).json({
             payload: {
-                name: isValid.name,
+                username: isValid.name,
+                id: isValid.id,
                 verified: isValid.is_verified,
                 admin: isValid.is_admin,
                 status: "success"

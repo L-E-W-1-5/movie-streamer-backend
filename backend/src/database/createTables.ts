@@ -82,7 +82,7 @@ console.log("drop table")
 export async function checkTableExists() {
 
     const result = await pool.query(`
-        SELECT to_regclass('public.movies') AS table_exists;
+        SELECT to_regclass('public.messages') AS table_exists;
     `);
 
     if (result.rows[0].table_exists) {

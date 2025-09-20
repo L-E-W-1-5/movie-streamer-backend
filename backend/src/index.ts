@@ -2,14 +2,10 @@ import './config.js'
 import express, { type Express, type Request, type Response , type Application } from 'express';
 import cors from 'cors';
 import morgan from "morgan";
-// import multer from 'multer';
-// import mime from 'mime-types'
-// import { putObject } from './util/putObject.js';
-// import { addMovie, getMovies } from './database/models.js'
 import userRouter from './routes/user_routes.js'
 import movieRouter from './routes/movie_routes.js'
-//import { movieUpload } from './controllers/movieUpload.js'
-import { createUsersTable, dropTable, checkTableExists, createMovieTable } from './database/createTables.js'
+import { createUsersTable, dropTable, checkTableExists, createMovieTable, createMessagesTable } from './database/createTables.js'
+import messageRouter from './routes/message_routes.js';
 //import { randomBytes } from 'crypto';
 
 const app: Application = express();
@@ -35,6 +31,8 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/movies', movieRouter);
 
 app.use('/users', userRouter);
+
+app.use('/messages', messageRouter)
 
 
 
