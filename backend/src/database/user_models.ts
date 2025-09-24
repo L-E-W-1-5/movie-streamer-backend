@@ -37,9 +37,11 @@ export const findUser = async (input:string) => {
             `, [input])
     };
 
-    console.log(isUser.rows)
 
-    if(!isUser.rows[0]) return 
+    if(!isUser.rows[0]){
+
+        throw new Error("no user found");
+    }
 
     return isUser.rows[0];
 };

@@ -2,17 +2,18 @@ import express, { type Express, type Request, type Response , type Application }
 import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin } from '../database/user_models.js'
 import { sendMailToUser, sendMailToAdmin } from '../nodemailer/email.js';
 import { v4 as uuidv4 } from 'uuid'
+import jwt from 'jsonwebtoken'
+//import { verifyToken } from '../index.js';
 
 const userRouter = express.Router();
     
-
+const secret_key:string = process.env.JWT_SECRET!;
 
 // get all users
 userRouter.get('/', async (req: Request, res: Response) => {
 
     const allUsers = await getUsers();
 
-    console.log("38", allUsers)
 
     res.status(200).json({
         status: "success",
@@ -98,8 +99,6 @@ userRouter.get('/create_admin', async (req:Request, res:Response) => {
 
     const isAdmin = await updateUserAdmin(token);
 
-    console.log(isAdmin)
-
     return res.status(201).json({
         payload: isAdmin,
         status: "success"
@@ -129,8 +128,6 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
             status: "error"
         })
     }
-
-    console.log("34", details)
     
     await sendMailToAdmin(name, email, details.id)
 
@@ -144,15 +141,35 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 // check if user has an account and is verified after login attempt
 userRouter.post('/', async (req: Request, res: Response) => {
 
-
-    console.log("108 user_routes", req.body)
-
     const { guid } = req.body;
 
-    const isValid = await findUser(guid);
+    let isValid;
+
+    try{
+
+        isValid = await findUser(guid);
+
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(400).json({
+            payload: err,
+            status: "error"
+        })
+    }
+
 
     if(isValid){
         //TODO: create jwt token to return, along with is_admin
+
+        const token = jwt.sign({
+            username: isValid.name,
+            email: isValid.email,
+            admin: isValid.is_admin
+        }, 
+            secret_key
+        );
 
         return res.status(200).json({
             payload: {
@@ -160,6 +177,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
                 id: isValid.id,
                 verified: isValid.is_verified,
                 admin: isValid.is_admin,
+                token: token,
                 status: "success"
             }
         })

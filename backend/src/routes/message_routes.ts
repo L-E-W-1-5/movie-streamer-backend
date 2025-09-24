@@ -7,10 +7,25 @@ const messageRouter = express.Router();
 
 //get all messages
 messageRouter.get('/', async (req:Request, res:Response) => {
-    
-    const allMessages = await getMessages();
 
-    if(allMessages !== "error"){
+    let allMessages;
+    
+    try{
+
+        allMessages = await getMessages();
+
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(400).json({
+            payload: err,
+            status: "error"
+        })
+    }
+
+
+    if(allMessages){
 
         return res.status(200).json({
             payload: allMessages,
@@ -39,9 +54,23 @@ messageRouter.post('/send_message', async (req:Request, res:Response) => {
         });
     };
 
-    const sentMessage = await saveMessage(username, userid, timestamp, message);
+    let sentMessage;
 
-    if(sentMessage !== "error"){
+    try{
+
+        sentMessage = await saveMessage(username, userid, timestamp, message);
+
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(400).json({
+            payload: err,
+            status: "error"
+        })
+    }
+
+    if(sentMessage){
 
         return res.status(201).json({
             payload: sentMessage,

@@ -5,18 +5,16 @@ export const getMessages = async () => {
 
     let allMessages
 
-    try{
-         allMessages = await pool.query(`
-            SELECT * 
-            FROM messages
-        ;`);
+    
+    allMessages = await pool.query(`
+        SELECT * 
+        FROM messages
+    ;`);
 
-    }catch(err){
+    if(!allMessages.rows[0]){
 
-        console.log(err);
-
-        return "error";
-    };
+        throw new Error("no messages found in database");
+    }
 
     return allMessages.rows;
 };
@@ -26,19 +24,18 @@ export const saveMessage = async (username:string, userid:string, timestamp:stri
 
     let sentMessage;
 
-    try{
-        sentMessage = await pool.query(`
-            INSERT INTO messages (username, userid, timestamp, message)
-            VALUES ($1, $2, $3, $4)
-            RETURNING *     
-        `, [username, userid, timestamp, message]);
-        
-    }catch(err){
+    
+    sentMessage = await pool.query(`
+        INSERT INTO messages (username, userid, timestamp, message)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *     
+    `, [username, userid, timestamp, message]);
 
-        console.log(err);
+    if(!sentMessage.rows[0]){
 
-        return "error";
-    }
+        throw new Error("message could not be saved to the database")
+    };
+    
 
     return sentMessage.rows[0];
 }
