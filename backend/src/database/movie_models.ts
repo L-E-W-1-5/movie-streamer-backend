@@ -9,7 +9,7 @@ export const addMovie = async (title: string, url: string, genre: string) => {
             RETURNING *;
         `, [title, url, genre]);
 
-    console.log(createMovieEntry)
+
     if(!createMovieEntry.rows[0]){
 
         throw new Error("movie not added to the database");
