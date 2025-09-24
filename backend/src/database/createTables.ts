@@ -63,26 +63,27 @@ export const createMessagesTable = async () => {
 };
 
 
-export const dropTable = async () => {
+export const dropTable = async (table:string) => {
 
 console.log("drop table")
 
     try{
 
         await pool.query(`
-                DROP TABLE movies   
+                DROP TABLE ${table}   
             `)
 
     }catch(err){
+
         console.log(err)
     }
 }
 
 
-export async function checkTableExists() {
+export async function checkTableExists(table: string) {
 
     const result = await pool.query(`
-        SELECT to_regclass('public.messages') AS table_exists;
+        SELECT to_regclass('public.${table}') AS table_exists;
     `);
 
     if (result.rows[0].table_exists) {

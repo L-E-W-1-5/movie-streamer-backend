@@ -30,12 +30,14 @@ movieRouter.get('/', async (req:Request, res: Response) => {
   }
 
 
-  if(!movies) res.send({
-    payload: "failed to load movies",
-    status: "error"
+  if(!movies) 
+
+    return res.status(400).json({
+      payload: "failed to load movies",
+      status: "error"
   })
 
-  res.send({
+  return res.status(200).json({
     payload: movies,
     status: "success"
   })
@@ -52,7 +54,6 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
   const file: Express.Multer.File | undefined = req.file;
 
   if(!title || typeof title !== 'string' || !file || !genre || typeof genre !== 'string'){
-
 
     return res.status(400).json({
       payload: "all fields required",
@@ -78,8 +79,8 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
     return res.status(500).json({
       payload: "Upload failed due to server error",
       status: "error"
-    })
-  }
+    });
+  };
 
   if(!result){
 

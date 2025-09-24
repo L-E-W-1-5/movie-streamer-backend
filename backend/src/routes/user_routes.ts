@@ -3,16 +3,39 @@ import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin } f
 import { sendMailToUser, sendMailToAdmin } from '../nodemailer/email.js';
 import { v4 as uuidv4 } from 'uuid'
 import jwt from 'jsonwebtoken'
-//import { verifyToken } from '../index.js';
+import { verifyToken } from '../middleware/auth.js';
 
 const userRouter = express.Router();
     
 const secret_key:string = process.env.JWT_SECRET!;
 
 // get all users
-userRouter.get('/', async (req: Request, res: Response) => {
+userRouter.get('/', verifyToken, async (req: Request, res: Response) => {
 
-    const allUsers = await getUsers();
+ 
+    if(!req.user.is_admin){
+
+        return res.status(400).json({
+            payload: "admin accounts only",
+            status: "error"
+        })
+    }
+
+    let allUsers;
+
+    try{
+
+        allUsers = await getUsers();
+
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(500).json({
+            payload: err,
+            status: "error"
+        })
+    }
 
 
     res.status(200).json({
@@ -82,8 +105,8 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
 });
 
-
-userRouter.get('/create_admin', async (req:Request, res:Response) => {
+// this is the endpoint to upgrade a user to admin
+userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) => {
 
     const tokenParam = req.query.token;
 
@@ -97,7 +120,21 @@ userRouter.get('/create_admin', async (req:Request, res:Response) => {
         });
     };
 
-    const isAdmin = await updateUserAdmin(token);
+    let isAdmin;
+
+    try{
+
+        isAdmin = await updateUserAdmin(token);
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(500).json({
+            payload: err,
+            status: "error"
+        })
+    }
+
 
     return res.status(201).json({
         payload: isAdmin,
@@ -114,7 +151,6 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 
     let details
 
-
     try{
 
         details = await addUser(name, email, guid);
@@ -124,7 +160,7 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
         console.log(err);
 
         return res.status(500).json({
-            payload: "failed to create user in database",
+            payload: err,
             status: "error"
         })
     }
@@ -161,7 +197,6 @@ userRouter.post('/', async (req: Request, res: Response) => {
 
 
     if(isValid){
-        //TODO: create jwt token to return, along with is_admin
 
         const token = jwt.sign({
             username: isValid.name,

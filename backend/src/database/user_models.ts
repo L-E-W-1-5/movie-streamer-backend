@@ -13,6 +13,11 @@ export const addUser = async (name:string, email:string, guid:string) => {
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *;
         `, [name, email, guid, is_admin, is_verified]);
+
+    if(!createUserEntry.rows[0]){
+
+        throw new Error("new user not created");
+    };
     
     return createUserEntry.rows[0];
 };
@@ -56,7 +61,12 @@ export const updateUserVerifiction = async (input:string) => {
             SET is_verified = $2 
             WHERE id = $1
             RETURNING *
-        `, [input, newVerification])
+        `, [input, newVerification]);
+
+    if(!updatedUser.rows[0]){
+
+        throw new Error("user not verified");
+    }
 
     return updatedUser.rows[0];
 }
@@ -73,6 +83,11 @@ export const updateUserAdmin = async (input:string) => {
             RETURNING * 
         `, [input, isAdmin]);
 
+    if(!updatedUser.rows[0]){
+
+        throw new Error("user not updated to admin");
+    }
+
     return updatedUser.rows[0];
 }
 
@@ -82,6 +97,11 @@ export const getUsers = async () => {
     const allUsers = await pool.query(`
             SELECT * FROM users
         `)
+
+    if(!allUsers.rows[0]){
+
+        throw new Error("failed to get all users from database")
+    }
     
     return allUsers.rows;
 };
