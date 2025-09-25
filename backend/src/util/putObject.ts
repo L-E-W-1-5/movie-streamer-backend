@@ -1,5 +1,6 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { s3Client } from "./s3-credentials.js";
+//import { getsignedUrl } from '@aws-sdk/s3-request-presigner'
 
 
 
@@ -19,8 +20,11 @@ export const putObject = async(file:Buffer, fileName:string, mimeType:string) =>
         
         const data = await s3Client.send(command)
 
+        //const signUrl = await getSignedUrl
+
         
         if(data.$metadata.httpStatusCode !== 200){
+
             return;
         }
     

@@ -33,3 +33,22 @@ export const getMovies = async () => {
 
     return allMovies.rows;
 };
+
+
+export const deleteMovie = async (id: string) => {
+
+    const movie = await pool.query(`
+            DELETE FROM movies
+            WHERE id = $1
+            RETURNING *
+        `, [id])
+
+    console.log(deleteMovie)
+
+    if(!movie.rows[0]){
+
+        throw new Error("movie not deleted from database");
+    }
+
+    return movie.rows[0];
+}

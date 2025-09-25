@@ -110,6 +110,8 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
 
     const tokenParam = req.query.token;
 
+    //TODO: perform a check here to req.user to check for admin account - after resetting database of users
+
     const token = typeof tokenParam === 'string' ? tokenParam : undefined
 
     if(!token){

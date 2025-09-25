@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addMovie, getMovies } from '../database/movie_models.js'
+import { addMovie, getMovies, deleteMovie } from '../database/movie_models.js'
 import { putObject } from '../util/putObject.js';
+import { deleteObject } from '../util/deleteObjects.js';
 import multer from 'multer';
 import mime from 'mime-types'
 
@@ -120,6 +121,63 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
   });
 
 });
+
+// delete a movie
+movieRouter.post('delete-movie', async (req: Request, res: Response) => {
+
+  const { fileName, id } = req.body;
+
+  let s3Return
+
+  try{
+
+    s3Return = await deleteObject(fileName);
+    console.log(s3Return)
+  
+  }catch(err){
+
+    console.log(err);
+
+    return res.status(500).json({
+      payload: err,
+      status: "error"
+    })
+  }
+
+  let databaseReturn
+
+  if(s3Return === "deleted"){
+
+    try{
+
+      databaseReturn = await deleteMovie(id);
+
+    }catch(err){
+
+      console.log(err);
+
+      return res.status(400).json({
+        payload: err,
+        status: "error"
+      });
+    };
+
+    if(databaseReturn){
+
+      return res.status(200).json({
+        payload: "movie deleted successfully from all storage",
+        status: "success"
+      })
+    }else{
+
+      return res.status(400).json({
+        payload: "movie not deleted from database",
+        status: "error"
+      })
+    }
+  }
+
+})
 
 
 export default movieRouter

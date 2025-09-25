@@ -17,9 +17,14 @@ declare module 'express' {
 
 const app: Application = express();
 
+
+
 app.use(express.json());
 
-app.use(cors());
+//TODO: change this for localhost requests
+app.use(cors({
+  origin: 'https://luluflix.netlify.app'
+}));
 
 app.use(morgan('dev'));
 
