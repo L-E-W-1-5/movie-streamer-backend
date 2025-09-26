@@ -22,9 +22,11 @@ const app: Application = express();
 app.use(express.json());
 
 //TODO: change this for localhost requests
-app.use(cors({
-  origin: 'https://luluflix.netlify.app'
-}));
+// app.use(cors({
+//   origin: 'https://luluflix.netlify.app'
+// }));
+
+app.use(cors());
 
 app.use(morgan('dev'));
 

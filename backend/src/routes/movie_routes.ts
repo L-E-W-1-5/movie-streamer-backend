@@ -123,15 +123,15 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
 });
 
 // delete a movie
-movieRouter.post('delete-movie', async (req: Request, res: Response) => {
+movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
-  const { fileName, id } = req.body;
+  const { title, id } = req.body.movie;
 
   let s3Return
 
   try{
 
-    s3Return = await deleteObject(fileName);
+    s3Return = await deleteObject(title);
     console.log(s3Return)
   
   }catch(err){
