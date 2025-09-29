@@ -59,7 +59,8 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
     try{
 
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
             auth: {
                 user: process.env.EMAIL,
                 pass: process.env.EMAIL_PASS
@@ -75,6 +76,7 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
                     <p><b>${url}?token=${id}</b></p>`
         })
     }catch(err){
+
         console.log(err)
     }
 }
