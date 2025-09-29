@@ -147,7 +147,9 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
 // endpoint for new user registration
 userRouter.post('/newuser', async (req: Request, res: Response) => {
 
-    const { name, email } = req.body.data;
+    console.log(req.body);
+
+    const { name, email } = req.body;
 
     const guid = uuidv4();
 
