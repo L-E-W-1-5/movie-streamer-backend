@@ -106,17 +106,21 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
             subject: "new user request",
             html: `<p>A new user: ${name}, has registered on luluflix with an email of: ${email}</p>
                     <p>Click this link to accept them..</p>
-                    <p><b>${url}?token=${id}</b></p>`
+                    <a><b>${url}?token=${id}</b></a>`
 
         }, (error, info) => {
 
             if(error){
 
                 console.log(error);
+
+                throw new Error(`mail not sent`)
             
             }else{
 
                 console.log(info);
+
+                throw new Error(`mail not sent`)
             }
         });
 
