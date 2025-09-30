@@ -88,17 +88,26 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
 
     console.log("54", email, name, id)
 
-    try{
+    
+    // const transporter = nodemailer.createTransport({
+    //     host: 'smtp.gmail.com',
+    //     port: 587,
+    //     secure: false,
+    //     auth: {
+    //         user: process.env.EMAIL,
+    //         pass: process.env.EMAIL_PASS
+    //     }
+    // });
 
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false,
+    const transporter = nodemailer.createTransport({
+            service: "gmail",
             auth: {
                 user: process.env.EMAIL,
                 pass: process.env.EMAIL_PASS
-            }
-        });
+            },
+    });
+    
+    try{
 
         transporter.sendMail({
             from: process.env.EMAIL,
@@ -106,7 +115,7 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
             subject: "new user request",
             html: `<p>A new user: ${name}, has registered on luluflix with an email of: ${email}</p>
                     <p>Click this link to accept them..</p>
-                    <a><b>${url}?token=${id}</b></a>`
+                    <a href=${url}?token=${id}><b>${url}?token=${id}</b></a>`
 
         }, (error, info) => {
 
@@ -127,5 +136,7 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
     }catch(err){
 
         console.log(err);
+
+        throw new Error(`mail not sent`)
     };
 }

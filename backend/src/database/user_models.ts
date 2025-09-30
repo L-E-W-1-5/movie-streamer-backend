@@ -119,6 +119,8 @@ export const getUsers = async () => {
 
         throw new Error("failed to get all users from database")
     }
+
+    console.log(allUsers.rows)
     
     return allUsers.rows;
 };

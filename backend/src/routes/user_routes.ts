@@ -7,19 +7,20 @@ import { verifyToken } from '../middleware/auth.js';
 
 const userRouter = express.Router();
     
-const secret_key:string = process.env.JWT_SECRET!;
+const secret_key: string = process.env.JWT_SECRET!;
 
 // get all users
 userRouter.get('/', verifyToken, async (req: Request, res: Response) => {
 
  
-    if(!req.user.is_admin){
+    console.log(req.user)
+    if(!req.user.admin){
 
         return res.status(400).json({
-            payload: "admin accounts only",
+            payload: "admin account required",
             status: "error"
-        })
-    }
+        });
+    };
 
     let allUsers;
 
@@ -78,7 +79,7 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
         })
     };
 
-
+console.log("here")
     try{
 
         emailSent = await sendMailToUser(confirmed.guid, confirmed.email)

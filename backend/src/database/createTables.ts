@@ -28,7 +28,7 @@ export const createUsersTable = async() => {
         await pool.query(
             `CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL UNIQUE,
+                username VARCHAR(255) NOT NULL UNIQUE,
                 email VARCHAR(255) NOT NULL UNIQUE,
                 guid UUID,
                 is_admin BOOLEAN DEFAULT FALSE,
