@@ -1,7 +1,39 @@
 import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail'
 
+sgMail.setApiKey(process.env.SENDGRID_APIKEY!);
+ 
 const url = 'https://movie-streamer-backend.onrender.com/users/verify_user';
 
+
+
+export const sendMailSendGrid = async (name:string, email:string, id:string) => {
+
+    console.log(process.env.EMAIL)
+    const msg = {
+        from: process.env.EMAIL!,
+        to: "lewiswootton88@gmail.com",
+        subject: 'working?',
+        html: `<p>A new user: ${name}, has registered on luluflix with an email of: ${email}</p>
+                <p>Click this link to accept them..</p>
+                <p><b>${url}?token=${id}</b></p>`
+    };
+
+    try{
+
+        const response = await sgMail.send(msg);
+
+        console.log("email sent", response[0].statusCode);
+
+    }catch(err){
+
+        console.log(err);
+        
+        throw new Error("email failed to send via sendgrid")
+    }
+}
+
+ 
 
 //email sent to a newly verified user
 export const sendMailToUser = async (guid:string, email:string) => {
@@ -59,8 +91,7 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
     try{
 
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 465,
+            service: 'gmail',
             auth: {
                 user: process.env.EMAIL,
                 pass: process.env.EMAIL_PASS
@@ -74,9 +105,21 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
             html: `<p>A new user: ${name}, has registered on luluflix with an email of: ${email}</p>
                     <p>Click this link to accept them..</p>
                     <p><b>${url}?token=${id}</b></p>`
-        })
+
+        }, (error, info) => {
+
+            if(error){
+
+                console.log(error);
+
+            }else{
+
+                console.log(info);
+            }
+        });
+
     }catch(err){
 
-        console.log(err)
-    }
+        console.log(err);
+    };
 }

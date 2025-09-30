@@ -23,6 +23,23 @@ export const addUser = async (name:string, email:string, guid:string) => {
 };
 
 
+export const deleteUser = async (id: string) => {
+
+    const deleteUser = await pool.query(`
+            DELETE FROM users
+            WHERE id = $1
+            RETURNING *  
+        `, [id])
+
+    if(!deleteUser.rows[0]){
+
+        throw new Error("could not find user to delete")
+    }
+
+    return deleteUser.rows[0]
+} 
+
+
 export const findUser = async (input:string) => {
 
     let isUser

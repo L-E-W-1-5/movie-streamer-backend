@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin } from '../database/user_models.js'
-import { sendMailToUser, sendMailToAdmin } from '../nodemailer/email.js';
+import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin, deleteUser } from '../database/user_models.js'
+import { sendMailToUser, sendMailToAdmin, sendMailSendGrid } from '../nodemailer/email.js';
 import { v4 as uuidv4 } from 'uuid'
 import jwt from 'jsonwebtoken'
 import { verifyToken } from '../middleware/auth.js';
@@ -164,12 +164,36 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
         console.log(err);
 
         return res.status(500).json({
-            payload: err,
+            payload: `error adding user to database, please try again later. ${err}`,
+            status: "error"
+        })
+    }
+
+    try{
+
+        //await sendMailSendGrid(name, email, details.id)
+        await sendMailToAdmin(name, email, details.id)
+
+    }catch(err){
+
+        console.log(err);
+
+        const deletedUser = await deleteUser(details.id);
+
+        if(!deletedUser){
+
+            return res.status(500).json({
+                payload: `user ${details.id} could not be deleted from the database and email could not be sent to admin for verification`,
+                status: "error"
+            })
+        }
+
+        return res.status(500).json({
+            payload: "error sending email to admin, user not created",
             status: "error"
         })
     }
     
-    await sendMailToAdmin(name, email, details.id)
 
     return res.status(201).json({
         payload: "user added, awaiting verification from admin",
