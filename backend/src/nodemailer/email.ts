@@ -81,6 +81,7 @@ export const sendMailToUser = async (guid:string, email:string) => {
         console.log(err);
     }
   
+    return;
 }
 
 // email sent to admin to verify a new user registration
@@ -139,4 +140,7 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
 
         throw new Error(`mail not sent`)
     };
+
+    return;
+
 }

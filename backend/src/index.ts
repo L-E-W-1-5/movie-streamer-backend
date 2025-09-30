@@ -8,6 +8,7 @@ import { createUsersTable, dropTable, checkTableExists, createMovieTable, create
 import messageRouter from './routes/message_routes.js';
 import { verifyToken } from './middleware/auth.js';
 //import { randomBytes } from 'crypto';
+import net from 'net';
 
 declare module 'express' {
   interface Request {
@@ -31,6 +32,20 @@ app.use(cors());
 app.use(morgan('dev'));
 
 const port = process.env.PORT || 3001;
+
+const testSMTP = () => {
+  const client = net.createConnection({ host: 'smtp.gmail.com', port: 587 }, () => {
+    console.log('Connected to SMTP server');
+    client.end();
+  });
+  client.on('error', (err) => {
+    console.error('Connection failed:', err);
+  });
+};
+
+// Run the test
+testSMTP();
+
 
 
 app.get('/', (req: Request, res: Response) => {
