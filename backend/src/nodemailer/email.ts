@@ -91,7 +91,9 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
     try{
 
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
             auth: {
                 user: process.env.EMAIL,
                 pass: process.env.EMAIL_PASS
@@ -111,7 +113,7 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
             if(error){
 
                 console.log(error);
-
+            
             }else{
 
                 console.log(info);
