@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import sgMail from '@sendgrid/mail'
+import type { UUID } from 'crypto';
 
 sgMail.setApiKey(process.env.SENDGRID_APIKEY!);
  
@@ -16,27 +17,55 @@ export const sendMailSendGrid = async (name:string, email:string, id:string) => 
         subject: 'working?',
         html: `<p>A new user: ${name}, has registered on luluflix with an email of: ${email}</p>
                 <p>Click this link to accept them..</p>
-                <p><b>${url}?token=${id}</b></p>`
+                <a href=${url}?token=${id}><b>${url}?token=${id}</b></a>`
     };
 
-    try{
 
-        const response = await sgMail.send(msg);
+    sgMail.send(msg)
 
-        console.log("email sent", response[0].statusCode);
+    .then(() => {
 
-    }catch(err){
+        console.log('email sent successfully');
+    })
+    .catch((err) => {
 
-        console.log(err);
-        
-        throw new Error("email failed to send via sendgrid")
-    }
+        console.error('error sending mail', err);
+
+        throw new Error('error sending mail', err);
+    })  
+};
+
+//email sent to newly verified user
+export const sendGridToUser = async (guid: UUID, email: string) => {
+
+    const msg = {
+        from: process.env.EMAIL!,
+        to: email,
+        subject: 'Login Dtails For Luluflix',
+        html: `<p>You have been accepted to join LuluFlix, all you need to do is login with this code each time..</p>
+                <p><b>${guid}</b></p>
+                <p>We understand you have a choice of streaming services and are happy you chose us.</p>
+                <p>Many thanks from the LuluFlix team :)</p>`
+    };
+
+    sgMail.send(msg)
+
+    .then(() => {
+
+        console.log('message sent successfully');
+    })
+    .catch((err) => {
+
+        console.error('error sending mail', err);
+
+        throw new Error('error sending mail', err);
+    })
 }
 
  
 
 //email sent to a newly verified user
-export const sendMailToUser = async (guid:string, email:string) => {
+export const sendMailToUser = async (guid: UUID, email:string) => {
 
     const subject = "Login Details For LuluFlix";
 
