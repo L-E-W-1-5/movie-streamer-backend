@@ -14,7 +14,7 @@ export const sendMailSendGrid = async (name:string, email:string, id:string) => 
     const msg = {
         from: process.env.EMAIL!,
         to: "lewiswootton88@gmail.com",
-        subject: 'working?',
+        subject: 'new user request for luluflix',
         html: `<p>A new user: ${name}, has registered on luluflix with an email of: ${email}</p>
                 <p>Click this link to accept them..</p>
                 <a href=${url}?token=${id}><b>${url}?token=${id}</b></a>`
@@ -32,16 +32,20 @@ export const sendMailSendGrid = async (name:string, email:string, id:string) => 
         console.error('error sending mail', err);
 
         throw new Error('error sending mail', err);
-    })  
+    });
+
+    return 'email sent successfully';
 };
 
 //email sent to newly verified user
 export const sendGridToUser = async (guid: UUID, email: string) => {
 
+    console.log(guid, email)
+
     const msg = {
         from: process.env.EMAIL!,
         to: email,
-        subject: 'Login Dtails For Luluflix',
+        subject: 'Login Details For Luluflix',
         html: `<p>You have been accepted to join LuluFlix, all you need to do is login with this code each time..</p>
                 <p><b>${guid}</b></p>
                 <p>We understand you have a choice of streaming services and are happy you chose us.</p>
@@ -59,7 +63,9 @@ export const sendGridToUser = async (guid: UUID, email: string) => {
         console.error('error sending mail', err);
 
         throw new Error('error sending mail', err);
-    })
+    });
+
+    return 'email sent successfully';
 }
 
  

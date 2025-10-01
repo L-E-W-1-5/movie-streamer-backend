@@ -79,11 +79,11 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
         })
     };
 
-console.log("here")
+
     try{
 
         //emailSent = await sendMailToUser(confirmed.guid, confirmed.email);
-        sendGridToUser(confirmed.guid, confirmed.email);
+        emailSent = sendGridToUser(confirmed.guid, confirmed.email);
 
     }catch(err){
 
