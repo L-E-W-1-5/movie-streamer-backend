@@ -45,6 +45,64 @@ userRouter.get('/', verifyToken, async (req: Request, res: Response) => {
     })
 });
 
+// endpoint for new user registration
+userRouter.post('/newuser', async (req: Request, res: Response) => {
+
+    console.log(req.body);
+
+    const { name, email } = req.body;
+
+    const guid = uuidv4();
+
+    let details
+
+    try{
+
+        details = await addUser(name, email, guid);
+
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(500).json({
+            payload: `error adding user to database, please try again later. ${err}`,
+            status: "error"
+        })
+    }
+
+    try{
+
+        await sendMailSendGrid(name, email, details.id)
+        //await sendMailToAdmin(name, email, details.id)
+
+    }catch(err){
+
+        console.log(err);
+
+        const deletedUser = await deleteUser(details.id);
+
+        if(!deletedUser){
+
+            return res.status(500).json({
+                payload: `user ${details.id} could not be deleted from the database and email could not be sent to admin for verification`,
+                status: "error"
+            })
+        }
+
+        return res.status(500).json({
+            payload: "error sending email to admin, user not created",
+            status: "error"
+        })
+    }
+    
+
+    return res.status(201).json({
+        payload: "user added, awaiting verification from admin",
+        status: "success"
+    })
+
+});
+
 // this is the endpoint for the link in the email sent to admin for user verification 
 userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
@@ -146,63 +204,6 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
     })
 })
 
-// endpoint for new user registration
-userRouter.post('/newuser', async (req: Request, res: Response) => {
-
-    console.log(req.body);
-
-    const { name, email } = req.body;
-
-    const guid = uuidv4();
-
-    let details
-
-    try{
-
-        details = await addUser(name, email, guid);
-
-    }catch(err){
-
-        console.log(err);
-
-        return res.status(500).json({
-            payload: `error adding user to database, please try again later. ${err}`,
-            status: "error"
-        })
-    }
-
-    try{
-
-        await sendMailSendGrid(name, email, details.id)
-        //await sendMailToAdmin(name, email, details.id)
-
-    }catch(err){
-
-        console.log(err);
-
-        const deletedUser = await deleteUser(details.id);
-
-        if(!deletedUser){
-
-            return res.status(500).json({
-                payload: `user ${details.id} could not be deleted from the database and email could not be sent to admin for verification`,
-                status: "error"
-            })
-        }
-
-        return res.status(500).json({
-            payload: "error sending email to admin, user not created",
-            status: "error"
-        })
-    }
-    
-
-    return res.status(201).json({
-        payload: "user added, awaiting verification from admin",
-        status: "success"
-    })
-
-});
 
 // check if user has an account and is verified after login attempt
 userRouter.post('/', async (req: Request, res: Response) => {
