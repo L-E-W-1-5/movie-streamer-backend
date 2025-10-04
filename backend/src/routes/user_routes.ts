@@ -257,6 +257,19 @@ userRouter.post('/', async (req: Request, res: Response) => {
 })
 
 
+userRouter.post('/delete-user', (req: Request, res: Response) => {
+
+    const { id } = req.body;
+
+    console.log(id)
+
+    // try{
+
+
+    // }
+})
+
+
 export default userRouter;
 
 //0e3ff365-5993-45fa-8206-fbf886651932
