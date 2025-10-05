@@ -168,13 +168,19 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 // this is the endpoint to upgrade a user to admin
 userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) => {
 
-    const tokenParam = req.query.token;
+    const idParam = req.query.token;
 
-    //TODO: perform a check here to req.user to check for admin account - after resetting database of users
+    if(!req.user.admin){
+     
+        return res.status(400).json({
+            payload: "admin account needed to complete this action",
+            status: "error"
+        })
+    }
 
-    const token = typeof tokenParam === 'string' ? tokenParam : undefined
+    const userId = typeof idParam === 'string' ? idParam : undefined
 
-    if(!token){
+    if(!userId){
 
         return res.status(400).json({
             payload: "no token in the request",
@@ -186,7 +192,8 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
 
     try{
 
-        isAdmin = await updateUserAdmin(token);
+        isAdmin = await updateUserAdmin(userId);
+
     }catch(err){
 
         console.log(err);
@@ -202,6 +209,59 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
         payload: isAdmin,
         status: "success"
     })
+});
+
+
+userRouter.post('/change_admin', verifyToken, async (req:Request, res:Response) => {
+
+    let { id, is_admin } = req.body;
+
+    console.log(req.user)
+
+    if(!req.user.admin){
+     
+        return res.status(400).json({
+            payload: "admin account needed to complete this action",
+            status: "error"
+        })
+    }
+
+    if(!id){
+
+        return res.status(400).json({
+            payload: "no id provided",
+            status: "error"
+        })
+    };
+
+    console.log(`${is_admin}`)
+
+    is_admin = !is_admin
+
+    console.log(`${is_admin}`)
+
+    let updatedInfo
+
+    try{
+
+        updatedInfo = await updateUserAdmin(id, is_admin)
+    
+    }catch(err){
+
+        console.log(err)
+
+        return res.status(400).json({
+            payload: "user status not changed",
+            status: "error"
+        })
+    }   
+
+    return res.status(200).json({
+        payload: "user status updated",
+        status: "success"
+    })
+
+
 })
 
 
@@ -257,16 +317,36 @@ userRouter.post('/', async (req: Request, res: Response) => {
 })
 
 
-userRouter.post('/delete-user', (req: Request, res: Response) => {
+userRouter.post('/delete_user', verifyToken, async (req: Request, res: Response) => {
 
     const { id } = req.body;
 
-    console.log(id)
+    let deletedUser;
 
-    // try{
+    
+
+    try{
+
+        deletedUser = await deleteUser(id);
+
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(400).json({
+            payload: "user could not be found",
+            status: "error"
+        })
+    }
 
 
-    // }
+    if(deletedUser){
+
+        return res.status(201).json({
+            payload: "user deleted successfully",
+            status: "success"
+        })
+    }
 })
 
 

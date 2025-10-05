@@ -31,6 +31,7 @@ export const deleteUser = async (id: string) => {
             RETURNING *  
         `, [id])
 
+
     if(!deleteUser.rows[0]){
 
         throw new Error("could not find user to delete")
@@ -89,9 +90,10 @@ export const updateUserVerifiction = async (input:string) => {
 }
 
 
-export const updateUserAdmin = async (input:string) => {
+export const updateUserAdmin = async (input:string, isAdmin = true) => {
 
-    const isAdmin = true;
+    //const isAdmin = true;
+    console.log(`${isAdmin}`)
 
     const updatedUser = await pool.query(`
             UPDATE users
