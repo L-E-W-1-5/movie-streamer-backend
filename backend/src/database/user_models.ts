@@ -70,9 +70,9 @@ export const findUser = async (input:string) => {
 };
 
 
-export const updateUserVerifiction = async (input:string) => {
+export const updateUserVerifiction = async (input:string, newVerification = true) => {
 
-    const newVerification = true;
+    console.log(newVerification)
 
     const updatedUser = await pool.query(`
             UPDATE users 
@@ -83,7 +83,7 @@ export const updateUserVerifiction = async (input:string) => {
 
     if(!updatedUser.rows[0]){
 
-        throw new Error("user not verified");
+        throw new Error("user verification not changed");
     }
 
     return updatedUser.rows[0];

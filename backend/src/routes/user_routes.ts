@@ -165,7 +165,7 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
 });
 
-// this is the endpoint to upgrade a user to admin
+// this is the endpoint to upgrade a user to admin (mainly for my own use, remove 'verifyToken' to use)
 userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) => {
 
     const idParam = req.query.token;
@@ -212,59 +212,6 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
 });
 
 
-userRouter.post('/change_admin', verifyToken, async (req:Request, res:Response) => {
-
-    let { id, is_admin } = req.body;
-
-    console.log(req.user)
-
-    if(!req.user.admin){
-     
-        return res.status(400).json({
-            payload: "admin account needed to complete this action",
-            status: "error"
-        })
-    }
-
-    if(!id){
-
-        return res.status(400).json({
-            payload: "no id provided",
-            status: "error"
-        })
-    };
-
-    console.log(`${is_admin}`)
-
-    is_admin = !is_admin
-
-    console.log(`${is_admin}`)
-
-    let updatedInfo
-
-    try{
-
-        updatedInfo = await updateUserAdmin(id, is_admin)
-    
-    }catch(err){
-
-        console.log(err)
-
-        return res.status(400).json({
-            payload: "user status not changed",
-            status: "error"
-        })
-    }   
-
-    return res.status(200).json({
-        payload: "user status updated",
-        status: "success"
-    })
-
-
-})
-
-
 // check if user has an account and is verified after login attempt
 userRouter.post('/', async (req: Request, res: Response) => {
 
@@ -287,7 +234,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
     }
 
 
-    if(isValid){
+    if(isValid.is_verified){
 
         const token = jwt.sign({
             username: isValid.name,
@@ -299,8 +246,8 @@ userRouter.post('/', async (req: Request, res: Response) => {
 
         return res.status(200).json({
             payload: {
-                username: isValid.name,
                 id: isValid.id,
+                username: isValid.name,
                 verified: isValid.is_verified,
                 admin: isValid.is_admin,
                 token: token,
@@ -344,9 +291,103 @@ userRouter.post('/delete_user', verifyToken, async (req: Request, res: Response)
 
         return res.status(201).json({
             payload: "user deleted successfully",
+            operation: "delete",
             status: "success"
         })
     }
+});
+
+
+// change whether a user is an admin or not
+userRouter.post('/change_admin', verifyToken, async (req:Request, res:Response) => {
+
+    let { id, is_admin } = req.body;
+
+    if(!req.user.admin){
+     
+        return res.status(400).json({
+            payload: "admin account needed to complete this action",
+            status: "error"
+        })
+    }
+
+    if(!id){
+
+        return res.status(400).json({
+            payload: "no id provided",
+            status: "error"
+        })
+    };
+
+
+    let updatedInfo
+
+    try{
+
+        updatedInfo = await updateUserAdmin(id, !is_admin)
+    
+    }catch(err){
+
+        console.log(err)
+
+        return res.status(400).json({
+            payload: "user status not changed",
+            status: "error"
+        })
+    }   
+
+    if(updatedInfo){
+
+        return res.status(200).json({
+            payload: "user status updated",
+            operation: "admin",
+            status: "success"
+        })
+    }
+});
+
+
+userRouter.post('/change_verify', verifyToken, async (req:Request, res:Response) => {
+
+    let { id, is_verified } = req.body;
+
+
+    if(!id){
+
+        return res.status(400).json({
+            payload: "no user found",
+            status: "error"
+        })
+    }
+
+    if(!req.user.admin){
+     
+        return res.status(400).json({
+            payload: "admin account needed to complete this action",
+            status: "error"
+        })
+    }
+
+
+    try{
+
+        await updateUserVerifiction(id, !is_verified)
+    
+    }catch(err){
+
+        console.log(err)
+
+        return res.status(400).json({
+            payload: "could not update user verification",
+            status: "error"
+        });
+    }
+
+    return res.status(201).json({
+        payload: "user verification updated",
+        operation: "verification",
+        status: "success"
+    })
 })
 
 
