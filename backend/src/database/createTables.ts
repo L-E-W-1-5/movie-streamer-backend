@@ -30,9 +30,14 @@ export const createUsersTable = async() => {
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(255) NOT NULL UNIQUE,
                 email VARCHAR(255) NOT NULL UNIQUE,
-                guid UUID,
+                guid VARCHAR,
                 is_admin BOOLEAN DEFAULT FALSE,
-                is_verified BOOLEAN DEFAULT FALSE
+                is_verified BOOLEAN DEFAULT FALSE,
+                pin_number VARCHAR(4),
+                is_loggedin BOOLEAN DEFAULT FALSE,
+                login_attempts INTEGER DEFAULT 0,
+                time_created TIMESTAMP DEFAULT NOW(),
+                last_login TIMESTAMP
             );`
         )
 

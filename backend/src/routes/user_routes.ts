@@ -1,7 +1,6 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin, deleteUser } from '../database/user_models.js'
+import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid } from '../database/user_models.js'
 import { sendMailToUser, sendMailToAdmin, sendMailSendGrid, sendGridToUser } from '../nodemailer/email.js';
-import { v4 as uuidv4 } from 'uuid'
 import jwt from 'jsonwebtoken'
 import { verifyToken } from '../middleware/auth.js';
 
@@ -52,13 +51,13 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 
     const { name, email } = req.body;
 
-    const guid = uuidv4();
+    
 
     let details
 
     try{
 
-        details = await addUser(name, email, guid);
+        details = await addUser(name, email);
 
     }catch(err){
 
@@ -128,6 +127,8 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
     if(userRecord){
 
         confirmed = await updateUserVerifiction(token);
+
+        confirmed.guid = createGuid(token);
 
     }else{
 

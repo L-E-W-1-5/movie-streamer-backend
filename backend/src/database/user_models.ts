@@ -1,25 +1,35 @@
 import pool from './db.js'
+import { v4 as uuidv4, type UUIDTypes } from 'uuid'
+import bcrypt from 'bcrypt'
+
+const saltRounds = 10;
 
 
 
-export const addUser = async (name:string, email:string, guid:string) => {
-    
-    const is_admin = false;
+export const addUser = async (name:string, email:string) => {
 
-    const is_verified = false;
+
 
     const createUserEntry = await pool.query(`
-            INSERT INTO users (name, email, guid, is_admin, is_verified)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *;
-        `, [name, email, guid, is_admin, is_verified]);
+        INSERT INTO users (name, email, is_admin, is_verified)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *;
+    `, [name, email, false, false]);
 
+    console.log(createUserEntry.rows);
+
+
+
+  
+
+            
     if(!createUserEntry.rows[0]){
 
         throw new Error("new user not created");
     };
-    
+
     return createUserEntry.rows[0];
+    
 };
 
 
@@ -87,6 +97,39 @@ export const updateUserVerifiction = async (input:string, newVerification = true
     }
 
     return updatedUser.rows[0];
+}
+
+
+export const createGuid = (userId: string) => {
+
+    const guid: UUIDTypes = uuidv4();
+
+    console.log(guid)
+
+    bcrypt.genSalt(saltRounds, function(err, salt) {
+
+        bcrypt.hash(guid, salt, async function(err, hash) {
+
+            if(err){
+
+                throw err;
+            }
+
+            console.log(hash)
+
+            await pool.query(`
+                UPDATE users 
+                SET guid = $1
+                WHERE id = $2
+                VALUES ($1)
+                RETURNING *;
+            `, [hash, userId]);
+
+            
+        });
+    });
+
+    return guid;
 }
 
 
