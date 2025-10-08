@@ -8,8 +8,6 @@ const saltRounds = 10;
 
 export const addUser = async (name:string, email:string) => {
 
-
-
     const createUserEntry = await pool.query(`
         INSERT INTO users (name, email, is_admin, is_verified)
         VALUES ($1, $2, $3, $4)
@@ -17,19 +15,13 @@ export const addUser = async (name:string, email:string) => {
     `, [name, email, false, false]);
 
     console.log(createUserEntry.rows);
-
-
-
-  
-
             
     if(!createUserEntry.rows[0]){
 
         throw new Error("new user not created");
     };
 
-    return createUserEntry.rows[0];
-    
+    return createUserEntry.rows[0]; 
 };
 
 
@@ -82,7 +74,7 @@ export const findUser = async (input:string) => {
 
 export const updateUserVerifiction = async (input:string, newVerification = true) => {
 
-    console.log(newVerification)
+    console.log(newVerification);
 
     const updatedUser = await pool.query(`
             UPDATE users 
@@ -94,10 +86,10 @@ export const updateUserVerifiction = async (input:string, newVerification = true
     if(!updatedUser.rows[0]){
 
         throw new Error("user verification not changed");
-    }
+    };
 
     return updatedUser.rows[0];
-}
+};
 
 
 export const createGuid = (userId: string) => {
@@ -121,7 +113,6 @@ export const createGuid = (userId: string) => {
                 UPDATE users 
                 SET guid = $1
                 WHERE id = $2
-                VALUES ($1)
                 RETURNING *;
             `, [hash, userId]);
 
