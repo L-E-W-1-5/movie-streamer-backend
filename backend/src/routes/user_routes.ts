@@ -134,7 +134,7 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
     console.log(confirmed);
 
-    if(confirmed){
+    if(confirmed && !confirmed.guid){
 
         confirmed.guid = createGuid(token);
     
