@@ -5,11 +5,26 @@ import bcrypt from 'bcrypt'
 const saltRounds = 10;
 
 
+type User = {
+    id: number,
+    username: string,
+    email: string,
+    guid: string,
+    is_admin: boolean,
+    is_verified: boolean,
+    pin_number: string,
+    is_loggedin: boolean,
+    login_attempts: number,
+    time_created: Date,
+    last_login: Date
+}
+
+
 
 export const addUser = async (name:string, email:string) => {
 
     const createUserEntry = await pool.query(`
-        INSERT INTO users (name, email, is_admin, is_verified)
+        INSERT INTO users (username, email, is_admin, is_verified)
         VALUES ($1, $2, $3, $4)
         RETURNING *;
     `, [name, email, false, false]);
@@ -43,27 +58,36 @@ export const deleteUser = async (id: string) => {
 } 
 
 
-export const findUser = async (input:string) => {
+export const findUserToLogin = async (suppliedGuid:string, email: string = "") => {
 
     let isUser
 
-    if(input.includes('-')){
+    if(suppliedGuid.includes('-')){
 
         isUser = await pool.query(`
             SELECT * FROM users
-            WHERE guid = $1
-        `, [input]);
+            WHERE email = $1
+        `, [email]);
 
-    }else{
+        if(!isUser) return
 
-        isUser = await pool.query(`
-            SELECT * FROM users
-            WHERE id = $1 
-            `, [input])
-    };
+        const guid = isUser.rows[0].guid
+
+        bcrypt.compare(suppliedGuid, guid, function(err, result) {
+
+            if(err) throw err
+
+            if(result !== true){
+
+                return false
+            }
+        })
 
 
-    if(!isUser.rows[0]){
+    }
+
+
+    if(!isUser || !isUser.rows[0]){
 
         throw new Error("no user found");
     }
@@ -74,14 +98,25 @@ export const findUser = async (input:string) => {
 
 export const updateUserVerifiction = async (input:string, newVerification = true) => {
 
-    console.log(newVerification);
 
-    const updatedUser = await pool.query(`
+    let updatedUser
+
+    try{
+
+        updatedUser = await pool.query(`
             UPDATE users 
             SET is_verified = $2 
             WHERE id = $1
             RETURNING *
         `, [input, newVerification]);
+    
+    }catch(err){
+
+        console.log(err)
+
+        throw new Error(`user could not be verified`)
+    }
+
 
     if(!updatedUser.rows[0]){
 
@@ -109,12 +144,22 @@ export const createGuid = (userId: string) => {
 
             console.log(hash)
 
-            await pool.query(`
-                UPDATE users 
-                SET guid = $1
-                WHERE id = $2
-                RETURNING *;
-            `, [hash, userId]);
+            try{
+
+                await pool.query(`
+                    UPDATE users 
+                    SET guid = $1
+                    WHERE id = $2
+                    RETURNING *;
+                `, [hash, userId]);
+
+            }catch(err){
+
+                console.log(err);
+
+                throw new Error(`error adding to database ${err}`)
+            }
+
 
             
         });

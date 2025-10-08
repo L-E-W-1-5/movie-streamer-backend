@@ -1,5 +1,5 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addUser, getUsers, findUser, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid } from '../database/user_models.js'
+import { addUser, getUsers, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid, findUserToLogin } from '../database/user_models.js'
 import { sendMailToUser, sendMailToAdmin, sendMailSendGrid, sendGridToUser } from '../nodemailer/email.js';
 import jwt from 'jsonwebtoken'
 import { verifyToken } from '../middleware/auth.js';
@@ -32,7 +32,7 @@ userRouter.get('/', verifyToken, async (req: Request, res: Response) => {
         console.log(err);
 
         return res.status(500).json({
-            payload: err,
+            payload: `${err}`,
             status: "error"
         })
     }
@@ -50,8 +50,6 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
     console.log(req.body);
 
     const { name, email } = req.body;
-
-    
 
     let details
 
@@ -107,6 +105,8 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
     const tokenParam = req.query.token;
 
+    console.log(req)
+
     const token = typeof tokenParam === 'string' ? tokenParam : undefined
 
     let confirmed
@@ -121,25 +121,30 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
         })
     };
 
-    const userRecord = await findUser(token)
 
-
-    if(userRecord){
+    try{
 
         confirmed = await updateUserVerifiction(token);
+    
+    }catch(err){
 
-        console.log(confirmed);
+        console.log(err)
+    }
+
+
+    console.log(confirmed);
+
+    if(confirmed){
 
         confirmed.guid = createGuid(token);
-
+    
     }else{
 
         return res.status(400).json({
             payload: "user not found",
             status: "error"
         })
-    };
-
+    }
 
     try{
 
@@ -218,13 +223,13 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
 // check if user has an account and is verified after login attempt
 userRouter.post('/', async (req: Request, res: Response) => {
 
-    const { guid } = req.body;
+    const { guid, email } = req.body;
 
     let isValid;
 
     try{
 
-        isValid = await findUser(guid);
+        isValid = await findUserToLogin(guid, email);
 
     }catch(err){
 

@@ -94,8 +94,13 @@ export async function checkTableExists(table: string) {
     if (result.rows[0].table_exists) {
 
         console.log('Table exists!');
+
+        return true;
+
     } else {
 
         console.log('Table does not exist.');
+
+        return false;
     }
 }
