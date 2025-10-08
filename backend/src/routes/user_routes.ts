@@ -128,6 +128,8 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
         confirmed = await updateUserVerifiction(token);
 
+        console.log(confirmed);
+
         confirmed.guid = createGuid(token);
 
     }else{

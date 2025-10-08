@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import sgMail from '@sendgrid/mail'
 import type { UUID } from 'crypto';
+import type { UUIDTypes } from 'uuid';
 
 sgMail.setApiKey(process.env.SENDGRID_APIKEY!);
  
@@ -37,7 +38,7 @@ export const sendMailSendGrid = async (name:string, email:string, id:string) => 
 };
 
 //email sent to newly verified user
-export const sendGridToUser = async (guid: UUID, email: string) => {
+export const sendGridToUser = async (guid: UUIDTypes, email: string) => {
 
     console.log(guid, email)
 
