@@ -134,9 +134,20 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
     console.log(confirmed);
 
-    if(confirmed && !confirmed.guid){
+    if(confirmed){
 
-        confirmed.guid = createGuid(token);
+        if(!confirmed.guid){
+
+            confirmed.guid = createGuid(token);
+        
+        }else{
+
+            return res.status(400).json({
+                payload: "user already has a guid registered",
+                status: "error"
+            })
+        }
+
     
     }else{
 

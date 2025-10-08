@@ -62,6 +62,8 @@ export const findUserToLogin = async (suppliedGuid:string, email: string = "") =
 
     let isUser
 
+
+
     if(suppliedGuid.includes('-')){
 
         isUser = await pool.query(`
@@ -79,18 +81,31 @@ export const findUserToLogin = async (suppliedGuid:string, email: string = "") =
 
             if(result !== true){
 
-                return false
+                //TODO: add 1 to login_attempts here
+
+                throw new Error(`password incorrect`);
             }
         })
-
-
     }
-
 
     if(!isUser || !isUser.rows[0]){
 
         throw new Error("no user found");
     }
+
+    const dateNow = new Date()
+
+    console.log(dateNow)
+
+    const update = await pool.query(`
+        UPDATE users
+        SET last_login = $1,
+        is_loggedIn = $2
+        WHERE email = $3
+        RETURNING *
+    `, [dateNow, true, email])
+
+    console.log(update.rows[0])
 
     return isUser.rows[0];
 };
@@ -158,10 +173,7 @@ export const createGuid = (userId: string) => {
                 console.log(err);
 
                 throw new Error(`error adding to database ${err}`)
-            }
-
-
-            
+            } 
         });
     });
 
