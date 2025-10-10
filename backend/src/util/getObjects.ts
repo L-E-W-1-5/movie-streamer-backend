@@ -16,11 +16,10 @@ export const getObjects = async (title: string) => {
 
         const url = await getSignedUrl(s3Client, command, { expiresIn: 3600})
 
-        console.log(url)
-
         if(url) return url
 
     }catch(err){
+        
         console.log(err);
     }
 }

@@ -186,7 +186,7 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
   
   const { title, genre } = req.body.film;
-  console.log(title);
+
 
   try{
 
@@ -195,11 +195,7 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
     if(signedMovie){
 
       return res.status(200).json({
-        payload: {
-          url: signedMovie,
-          genre: genre,
-          title: title
-        },
+        payload: signedMovie, 
         status: "success"
       })
     }

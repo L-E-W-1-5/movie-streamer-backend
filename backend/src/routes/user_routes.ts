@@ -259,11 +259,10 @@ userRouter.post('/', async (req: Request, res: Response) => {
         })
     }
 
-
     if(isValid.is_verified){
 
         const token = jwt.sign({
-            username: isValid.name,
+            username: isValid.username,
             email: isValid.email,
             admin: isValid.is_admin
         }, 
@@ -273,7 +272,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
         return res.status(200).json({
             payload: {
                 id: isValid.id,
-                username: isValid.name,
+                username: isValid.username,
                 verified: isValid.is_verified,
                 admin: isValid.is_admin,
                 token: token,
@@ -420,8 +419,6 @@ userRouter.post('/change_verify', verifyToken, async (req:Request, res:Response)
 userRouter.post('/user_logout', async (req: Request, res: Response) => {
 
     const { user } = req.body;
-
-    console.log(user)
 
     if(user){
 

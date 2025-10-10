@@ -1,5 +1,6 @@
 import express, {type Request, type Response } from 'express';
 import { getMessages, saveMessage } from '../database/message_models.js';
+import { verifyToken } from '../middleware/auth.js';
 
 
 
@@ -42,7 +43,7 @@ messageRouter.get('/', async (req:Request, res:Response) => {
 });
 
 // post a new message
-messageRouter.post('/send_message', async (req:Request, res:Response) => {
+messageRouter.post('/send_message', verifyToken, async (req:Request, res:Response) => {
     
     const { username, userid, timestamp, message } = req.body; 
 
