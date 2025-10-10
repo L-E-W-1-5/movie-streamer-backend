@@ -37,8 +37,6 @@ export const addUser = async (name:string, email:string) => {
         throw new Error(`user couldn't be added to the database, ${e}`);
     });
     
-
-    console.log(createUserEntry?.rows);
             
     if(createUserEntry === null || !createUserEntry?.rows[0]){
 
@@ -112,8 +110,6 @@ export const findUserToLogin = async (suppliedGuid: string, email: string) => {
 
     const dateNow = new Date()
 
-    console.log(dateNow)
-
     const update = await pool.query(`
         UPDATE users
         SET last_login = $1,
@@ -162,8 +158,6 @@ export const createGuid = (userId: string) => {
 
     const guid: UUIDTypes = uuidv4();
 
-    console.log(guid)
-
     bcrypt.genSalt(saltRounds, function(err, salt) {
 
         bcrypt.hash(guid, salt, async function(err, hash) {
@@ -200,7 +194,7 @@ export const createGuid = (userId: string) => {
 export const updateUserAdmin = async (input:string, isAdmin = true) => {
 
     //const isAdmin = true;
-    console.log(`${isAdmin}`)
+
 
     const updatedUser = await pool.query(`
             UPDATE users
@@ -236,7 +230,6 @@ export const getUsers = async () => {
         throw new Error("failed to get all users from database")
     }
 
-    console.log(allUsers.rows)
     
     return allUsers.rows;
 };

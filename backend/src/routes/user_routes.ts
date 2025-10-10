@@ -12,7 +12,6 @@ const secret_key: string = process.env.JWT_SECRET!;
 userRouter.get('/', verifyToken, async (req: Request, res: Response) => {
 
  
-    console.log(req.user)
     if(!req.user.admin){
 
         return res.status(400).json({
@@ -46,8 +45,6 @@ userRouter.get('/', verifyToken, async (req: Request, res: Response) => {
 
 // endpoint for new user registration
 userRouter.post('/newuser', async (req: Request, res: Response) => {
-
-    console.log(req.body);
 
     const { name, email } = req.body;
 
@@ -105,8 +102,6 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
     const tokenParam = req.query.token;
 
-    console.log(req)
-
     const token = typeof tokenParam === 'string' ? tokenParam : undefined
 
     let confirmed
@@ -131,8 +126,6 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
         console.log(err)
     }
 
-
-    console.log(confirmed);
 
     if(confirmed){
 

@@ -55,9 +55,9 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 // upload new movie
 movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Response) => {
 
-  const title = req.body.title;
+  const { title, genre, description, year } = req.body;
 
-  const genre = req.body.genre;
+  //const genre = req.body.genre;
 
   const file: Express.Multer.File | undefined = req.file;
 
@@ -69,6 +69,8 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
     });
 
   };
+
+  console.log(title, genre, description, year)
 
   const mimeType = mime.lookup(file.originalname) || 'video/mp4';
 
@@ -102,7 +104,7 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
 
   try{
 
-    movieDatabaseRecord = await addMovie(title, result.url, genre);
+    movieDatabaseRecord = await addMovie(title, genre, description, parseInt(year));
   
   }catch(err){
 
@@ -181,7 +183,7 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
 })
 
-
+// fetch movie from s3
 movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
   

@@ -1,19 +1,26 @@
 import pool from './db.js'
 
 
-export const addMovie = async (title: string, url: string, genre: string) => {
+export const addMovie = async (title: string, genre: string = "", description: string = "", year: number = 0, length: string = "") => {
+
+
 
     const createMovieEntry = await pool.query(`
-            INSERT INTO movies (title, url, genre)
-            VALUES ($1, $2, $3)
+            INSERT INTO movies (title, genre, description, year, length)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING *;
-        `, [title, url, genre]);
+        `, [title, genre, description, year, length])
+    
+    .catch((e) => {
+        console.log(e)
+    })
 
-
-    if(!createMovieEntry.rows[0]){
+    if(!createMovieEntry?.rows[0]){
 
         throw new Error("movie not added to the database");
     };
+
+    console.log(createMovieEntry.rows);
 
     return createMovieEntry.rows[0];
 };
