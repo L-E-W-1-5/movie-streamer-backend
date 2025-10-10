@@ -240,3 +240,22 @@ export const getUsers = async () => {
     
     return allUsers.rows;
 };
+
+export const logoutUser = async (id: number) => {
+
+    const logout: QueryResult<User> = await pool.query(`
+            UPDATE users
+            SET is_loggedIn = $1
+            WHERE id = $2
+            RETURNING *
+        `, [false, id])
+
+    .catch((e) => {
+
+        console.log(e);
+
+        throw new Error("could not logout user")
+    });
+
+    return logout.rows[0];
+}

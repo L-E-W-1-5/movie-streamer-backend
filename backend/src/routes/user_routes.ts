@@ -1,5 +1,5 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addUser, getUsers, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid, findUserToLogin } from '../database/user_models.js'
+import { addUser, getUsers, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid, findUserToLogin, logoutUser } from '../database/user_models.js'
 import { sendMailToUser, sendMailToAdmin, sendMailSendGrid, sendGridToUser } from '../nodemailer/email.js';
 import jwt from 'jsonwebtoken'
 import { verifyToken } from '../middleware/auth.js';
@@ -414,6 +414,40 @@ userRouter.post('/change_verify', verifyToken, async (req:Request, res:Response)
         operation: "verification",
         status: "success"
     })
+})
+
+
+userRouter.post('/user_logout', async (req: Request, res: Response) => {
+
+    const { user } = req.body;
+
+    console.log(user)
+
+    if(user){
+
+        try{
+
+            const logout = await logoutUser(user.id)
+
+            if(!logout?.is_loggedin){
+
+                return res.status(201).json({
+                    payload: "user logged out successfully",
+                    status: "success"
+                })
+            }
+
+        }catch(err){
+
+            console.log(err);
+
+            return res.json({
+                payload: `could not log user out ${err}`,
+                status: "error"
+            })
+        }
+
+    }
 })
 
 

@@ -4,13 +4,17 @@ import pool from './db.js'
 export async function createMovieTable() {
 
     try{
-
+            //TODO: not updated yet
         await pool.query(
             `CREATE TABLE IF NOT EXISTS movies (
             id SERIAL PRIMARY KEY, 
-            title VARCHAR(255) NOT NULL, 
-            url TEXT NOT NULL, 
+            title VARCHAR(255) NOT NULL,
+            description VARCHAR,
+            length VARCHAR,
+            year INTEGER,
             genre VARCHAR(50)
+            timestamp TIMESTAMP DEFAULT NOW(),
+            times_played INTEGER DEFAULT 0 
             );`
         );
 

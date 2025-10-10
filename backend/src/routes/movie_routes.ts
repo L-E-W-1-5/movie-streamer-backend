@@ -4,6 +4,8 @@ import { putObject } from '../util/putObject.js';
 import { deleteObject } from '../util/deleteObjects.js';
 import multer from 'multer';
 import mime from 'mime-types'
+import { verifyToken } from '../middleware/auth.js';
+import { getObjects } from '../util/getObjects.js';
 
 
 const movieRouter = express.Router();
@@ -176,6 +178,43 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
       })
     }
   }
+
+})
+
+
+movieRouter.post('/get_s3', verifyToken, async (req, res) => {
+
+  
+  const { title, genre } = req.body.film;
+  console.log(title);
+
+  try{
+
+    const signedMovie = await getObjects(req.body.film.title)
+
+    if(signedMovie){
+
+      return res.status(200).json({
+        payload: {
+          url: signedMovie,
+          genre: genre,
+          title: title
+        },
+        status: "success"
+      })
+    }
+  
+  }catch(err){
+
+    console.log(err);
+
+    return res.status(400).json({
+      payload: "could not get signed url",
+      status: "error"
+    })
+  }
+
+
 
 })
 
