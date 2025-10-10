@@ -39,8 +39,8 @@ userRouter.get('/', verifyToken, async (req: Request, res: Response) => {
 
 
     res.status(200).json({
-        status: "success",
-        payload: allUsers
+        payload: allUsers,
+        status: "success"
     })
 });
 
@@ -235,6 +235,13 @@ userRouter.get('/create_admin', verifyToken, async (req:Request, res:Response) =
 userRouter.post('/', async (req: Request, res: Response) => {
 
     const { guid, email } = req.body;
+
+    if(!guid || !email){
+
+        return res.status(400).json({
+            payload: "must include both an email and a password"
+        })
+    }
 
     let isValid;
 

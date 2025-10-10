@@ -9,7 +9,7 @@ const url = 'https://movie-streamer-backend.onrender.com/users/verify_user';
 
 
 
-export const sendMailSendGrid = async (name:string, email:string, id:string) => {
+export const sendMailSendGrid = async (name:string, email:string, id:number) => {
 
     const msg = {
         from: process.env.EMAIL!,
