@@ -272,6 +272,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
                 status: "success"
             }
         })
+        
     }else{
 
         return res.status(400).json({

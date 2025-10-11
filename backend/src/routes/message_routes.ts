@@ -71,7 +71,7 @@ messageRouter.post('/send_message', verifyToken, async (req:Request, res:Respons
         })
     }
 
-    if(sentMessage){
+    if(sentMessage.rows[0]){
 
         return res.status(201).json({
             payload: sentMessage,

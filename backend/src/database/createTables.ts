@@ -8,6 +8,7 @@ export async function createMovieTable() {
         await pool.query(
             `CREATE TABLE IF NOT EXISTS movies (
             id SERIAL PRIMARY KEY, 
+            key VARCHAR(255) NOT NULL,
             title VARCHAR(255) NOT NULL,
             description VARCHAR,
             length VARCHAR,

@@ -110,7 +110,7 @@ export const findUserToLogin = async (suppliedGuid: string, email: string) => {
 
     const dateNow = new Date()
 
-    const update = await pool.query(`
+    await pool.query(`
         UPDATE users
         SET last_login = $1,
         is_loggedIn = $2
@@ -118,7 +118,6 @@ export const findUserToLogin = async (suppliedGuid: string, email: string) => {
         RETURNING *
     `, [dateNow, true, email])
 
-    console.log(update.rows[0])
 
     return isUser.rows[0];
 };

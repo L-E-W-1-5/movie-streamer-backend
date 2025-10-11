@@ -1,11 +1,12 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addMovie, getMovies, deleteMovie } from '../database/movie_models.js'
+import { addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed } from '../database/movie_models.js'
 import { putObject } from '../util/putObject.js';
 import { deleteObject } from '../util/deleteObjects.js';
 import multer from 'multer';
 import mime from 'mime-types'
 import { verifyToken } from '../middleware/auth.js';
 import { getObjects } from '../util/getObjects.js';
+import { type Movie } from '../Types/Types.js';
 
 
 const movieRouter = express.Router();
@@ -70,7 +71,7 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
 
   };
 
-  console.log(title, genre, description, year)
+
 
   const mimeType = mime.lookup(file.originalname) || 'video/mp4';
 
@@ -187,14 +188,16 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
   
-  const { title, genre } = req.body.film;
+  const { key, id } = req.body.film;
 
 
   try{
 
-    const signedMovie = await getObjects(req.body.film.title)
+    const signedMovie = await getObjects(key)
 
     if(signedMovie){
+
+      increaseTimesPlayed(id)
 
       return res.status(200).json({
         payload: signedMovie, 
@@ -211,9 +214,35 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
       status: "error"
     })
   }
+})
 
 
+movieRouter.post('/update_movie', verifyToken, (req, res) => {
 
+  console.log(req.body)
+
+  const movie: Movie = req.body.edit;
+
+  console.log(movie);
+ 
+  try{
+
+    updateMovieDetails(movie)
+  
+  }catch(err){
+
+    console.log(err);
+
+    return res.status(400).json({
+      payload: err,
+      status: "error"
+    })
+  }
+
+  res.status(200).json({
+    payload: "movie details updated",
+    status: "success"
+  })
 })
 
 
