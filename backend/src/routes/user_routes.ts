@@ -1,5 +1,5 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { addUser, getUsers, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid, findUserToLogin, logoutUser } from '../database/user_models.js'
+import { addUser, getUsers, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid, findUserToLogin, logoutUser, changePassword } from '../database/user_models.js'
 import { sendMailToUser, sendMailToAdmin, sendMailSendGrid, sendGridToUser } from '../nodemailer/email.js';
 import jwt from 'jsonwebtoken'
 import { verifyToken } from '../middleware/auth.js';
@@ -463,6 +463,28 @@ userRouter.post('/user_logout', async (req: Request, res: Response) => {
             })
         }
 
+    }
+})
+
+
+userRouter.post('/change_password', verifyToken, async (req, res) => {
+
+    const { newPassword } = req.body;
+
+    const { id } = req.body.user
+
+    console.log(newPassword, id);
+
+    return;
+
+    const passwordChanged = await changePassword(newPassword, id)
+
+    if(passwordChanged){
+
+        return res.status(200).json({
+            payload: "password changed",
+            status: "success"
+        })
     }
 })
 

@@ -256,4 +256,44 @@ export const logoutUser = async (id: number) => {
     });
 
     return logout.rows[0];
+};
+
+
+export const changePassword = async (password: string, userId: number) => {
+
+    let pword
+
+    bcrypt.genSalt(saltRounds, function(err, salt) {
+
+        pword = bcrypt.hash(password, salt, async function(err, hash) {
+
+            if(err){
+
+                throw err;
+            }
+
+            console.log(hash)
+
+            try{
+
+                await pool.query(`
+                    UPDATE users 
+                    SET guid = $1
+                    WHERE id = $2
+                    RETURNING *;
+                `, [hash, userId]);
+
+            }catch(err){
+
+                console.log(err);
+
+                throw new Error(`error adding to database ${err}`)
+            } 
+        });
+    });
+
+    console.log(pword)
+
+    if(pword) return true
+   
 }
