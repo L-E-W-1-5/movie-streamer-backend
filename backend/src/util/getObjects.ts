@@ -14,7 +14,7 @@ export const getObjects = async (title: string) => {
 
         const command = new GetObjectCommand(params);
 
-        const url = await getSignedUrl(s3Client, command, { expiresIn: 3600})
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 14400})
 
         if(url) return url
 
