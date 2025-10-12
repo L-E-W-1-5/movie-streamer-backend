@@ -56,7 +56,7 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 // upload new movie
 movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Response) => {
 
-  const { title, genre, description, year } = req.body;
+  const { title, genre, description, year, length } = req.body;
 
   //const genre = req.body.genre;
 
@@ -105,7 +105,7 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
 
   try{
 
-    movieDatabaseRecord = await addMovie(title, genre, description, parseInt(year));
+    movieDatabaseRecord = await addMovie(title, genre, description, parseInt(year), length);
   
   }catch(err){
 

@@ -68,19 +68,18 @@ export const deleteMovie = async (id: string) => {
 
 export const updateMovieDetails = async (movie: Movie) => {
 
-    let { title, description, genre, year, id } = movie
-
-    
+    let { title, description, genre, year, id, length } = movie
 
     const updatedMovie = await pool.query(`
             UPDATE movies
             SET title = $1,
             description = $2,
             genre = $3,
-            year = $4
-            WHERE id = $5
+            year = $4,
+            length = $5
+            WHERE id = $6
             RETURNING *
-        `, [title, description, genre, year, id])
+        `, [title, description, genre, year, length, id])
     .catch((err) => {
 
         console.log(err);

@@ -1,5 +1,5 @@
 import express, {type Request, type Response } from 'express';
-import { getMessages, saveMessage } from '../database/message_models.js';
+import { deleteMessage, getMessages, saveMessage } from '../database/message_models.js';
 import { verifyToken } from '../middleware/auth.js';
 
 
@@ -71,7 +71,7 @@ messageRouter.post('/send_message', verifyToken, async (req:Request, res:Respons
         })
     }
 
-    if(sentMessage.rows[0]){
+    if(sentMessage){
 
         return res.status(201).json({
             payload: sentMessage,
@@ -84,8 +84,42 @@ messageRouter.post('/send_message', verifyToken, async (req:Request, res:Respons
             payload: "message not saved to the database",
             status: "error"
         })
-    }
+    };
+});
 
+
+messageRouter.post('/delete_message', verifyToken, async (req: Request, res: Response) => {
+
+    const { id } = req.body.msg;
+
+    try{
+
+        const msgDelete = await deleteMessage(id);
+
+        if(msgDelete){
+
+            return res.status(200).json({
+                payload: msgDelete,
+                status: "success"
+            })
+        
+        }else{
+
+            return res.status(400).json({
+                payload: "message could not be deleted",
+                status: "error"
+            })
+        }
+    
+    }catch(err){
+
+        console.log(err);
+
+        return res.status(400).json({
+            payload: err,
+            status: "error"
+        });
+    }
 })
 
 export default messageRouter;

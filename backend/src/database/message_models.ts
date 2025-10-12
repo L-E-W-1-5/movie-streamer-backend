@@ -20,7 +20,7 @@ export const getMessages = async () => {
 };
 
 
-export const saveMessage = async (username:string, userid:string, timestamp:string, message:string) => {
+export const saveMessage = async (username:string, userid:number, timestamp:string, message:string) => {
 
     let sentMessage;
 
@@ -38,4 +38,22 @@ export const saveMessage = async (username:string, userid:string, timestamp:stri
     
 
     return sentMessage.rows[0];
+};
+
+
+export const deleteMessage = async (id: number) => {
+
+    const deletedMessage = await pool.query(`
+            DELETE FROM messages
+            WHERE id = $1
+            RETURNING *
+        `, [id])
+
+    if(!deletedMessage.rows[0]){
+
+        throw new Error("message could not be deleted from database")
+    }
+
+
+    return deletedMessage.rows[0];
 }

@@ -67,59 +67,65 @@ export const deleteUser = async (id: number) => {
 // check whether login details are correct
 export const findUserToLogin = async (suppliedGuid: string, email: string) => {
 
-    let isUser
+    let isUser;
 
-    if(suppliedGuid.includes('-')){
+    if(!suppliedGuid){
+        return {
+            data: "no password supplied",
+            status: "error"
+        };
+    };
 
-        isUser = await pool.query(`
-            SELECT * FROM users
+    isUser = await pool.query(`
+        SELECT * FROM users
+        WHERE email = $1
+    `, [email]);
+
+    if(isUser.rows.length === 0){
+
+        return {
+            data: "no user found with matching email",
+            status: "email"
+        };
+    } ;
+
+    const user = isUser.rows[0];
+
+    const isMatch = await bcrypt.compare(suppliedGuid, user.guid);
+
+    if(!isMatch){
+
+        const loginAttempts = await pool.query(`
+            UPDATE users
+            SET login_attempts = login_attempts + 1
             WHERE email = $1
-        `, [email]);
+            RETURNING *
+        `, [email])
+        .catch(e => console.log(e));
 
-        if(!isUser) return
+        return {
+            data: "password incorrect",
+            status: "password"
+        };
+    };
+            
 
-        const guid = isUser.rows[0].guid
-
-        bcrypt.compare(suppliedGuid, guid, async function (err, result) {
-
-            if(err) throw err
-
-            if(result !== true){
-
-                //TODO: add 1 to login_attempts here
-
-                const loginAttempts = await pool.query(`
-                        UPDATE users
-                        SET login_attempts = login_attempts + 1
-                        WHERE email = $1
-                        RETURNING *
-                    `, [email])
-                .catch(e => console.log(e));
-
-                console.log(loginAttempts?.rows[0])
-
-                throw new Error(`password incorrect`);
-            }
-        })
-    }
-
-    if(!isUser || !isUser.rows[0]){
-
-        throw new Error("no user found");
-    }
-
-    const dateNow = new Date()
-
+    const dateNow = new Date();
+    
     await pool.query(`
         UPDATE users
         SET last_login = $1,
-        is_loggedIn = $2
-        WHERE email = $3
+        is_loggedIn = $2,
+        login_attempts = $3
+        WHERE email = $4
         RETURNING *
-    `, [dateNow, true, email])
-
-
-    return isUser.rows[0];
+    `, [dateNow, true, 0, email]);
+    
+    
+    return {
+        data: user,
+        status: "success"
+    };
 };
 
 

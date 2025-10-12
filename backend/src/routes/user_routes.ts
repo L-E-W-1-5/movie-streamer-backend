@@ -242,12 +242,36 @@ userRouter.post('/', async (req: Request, res: Response) => {
 
         isValid = await findUserToLogin(guid, email);
 
+        console.log("245", isValid)
+
+        if(isValid.status === "password"){
+
+            return res.status(400).json({
+                payload: isValid.data,
+                status: "error"
+            })
+        };
+
+        if(isValid.status === "email"){
+
+            return res.status(400).json({
+                payload: isValid.data,
+                status: "error"
+            })
+        }
+
+        if(isValid.status === "success"){
+
+            isValid = isValid.data
+        }
+
+
     }catch(err){
 
         console.log(err);
 
         return res.status(400).json({
-            payload: err,
+            payload: "error logging in, try again later",
             status: "error"
         })
     }
@@ -269,8 +293,9 @@ userRouter.post('/', async (req: Request, res: Response) => {
                 verified: isValid.is_verified,
                 admin: isValid.is_admin,
                 token: token,
-                status: "success"
-            }
+                
+            },
+            status: "success"
         })
         
     }else{
