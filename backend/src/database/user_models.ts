@@ -261,39 +261,33 @@ export const logoutUser = async (id: number) => {
 
 export const changePassword = async (password: string, userId: number) => {
 
-    let pword
+    try{
 
-    bcrypt.genSalt(saltRounds, function(err, salt) {
+        const salter = await bcrypt.genSalt(saltRounds);
 
-        pword = bcrypt.hash(password, salt, async function(err, hash) {
+        const hasher = await bcrypt.hash(password, salter)
 
-            if(err){
+        const updatedPassword = await pool.query(`
+            UPDATE users 
+            SET guid = $1
+            WHERE id = $2
+            RETURNING *;
+        `, [hasher, userId]);
 
-                throw err;
-            }
+        if(updatedPassword.rows.length !== 0){
 
-            console.log(hash)
+            return true;
+    
+        }else{
 
-            try{
+            return false;
+        }
 
-                await pool.query(`
-                    UPDATE users 
-                    SET guid = $1
-                    WHERE id = $2
-                    RETURNING *;
-                `, [hash, userId]);
+    }catch(err){
 
-            }catch(err){
+        console.log(err);
 
-                console.log(err);
-
-                throw new Error(`error adding to database ${err}`)
-            } 
-        });
-    });
-
-    console.log(pword)
-
-    if(pword) return true
-   
+        return false;
+    }
+  
 }

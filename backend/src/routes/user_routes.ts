@@ -473,9 +473,6 @@ userRouter.post('/change_password', verifyToken, async (req, res) => {
 
     const { id } = req.body.user
 
-    console.log(newPassword, id);
-
-    return;
 
     const passwordChanged = await changePassword(newPassword, id)
 
@@ -484,6 +481,13 @@ userRouter.post('/change_password', verifyToken, async (req, res) => {
         return res.status(200).json({
             payload: "password changed",
             status: "success"
+        })
+    
+    }else{
+
+        return res.status(400).json({
+            payload: "could not change password",
+            status: "error"
         })
     }
 })
