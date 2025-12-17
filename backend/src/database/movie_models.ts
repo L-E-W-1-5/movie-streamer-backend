@@ -8,18 +8,25 @@ import { type Movie } from '../Types/Types.js';
 
 
 
-export const addMovie = async (title: string, genre: string = "", description: string = "", year: number = 0, length: string = "") => {
+export const addMovie = async (title: string, genre: string = "", description: string = "", year: number = 1, length: string = "") => {
+
+    console.log(typeof year, year);
+    
 
     const createMovieEntry = await pool.query(`
             INSERT INTO movies (title, key, genre, description, year, length)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            VALUES ($1, $1, $2, $3, $4, $5)
             RETURNING *;
-        `, [title, title, genre, description, year, length])
+        `, [title, genre, description, year, length])
     
     .catch((e) => {
-        console.log(e)
+
+        console.log("model addMovie 20", e)
+
+        throw new Error("movie not added to the database");
     })
 
+// do i need this?
     if(!createMovieEntry?.rows[0]){
 
         throw new Error("movie not added to the database");

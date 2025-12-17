@@ -4,7 +4,9 @@ import { s3Client } from "./s3-credentials.js";
 
 
 
-export const putObject = async(file:Buffer, fileName:string, mimeType:string) => {
+export const putObject = async(file:Buffer, fileName:string, mimeType:string, isHLS: string | null = null) => {
+
+    if(isHLS) fileName = `${fileName}_hls/${fileName}`
 
     try{
         
@@ -30,7 +32,7 @@ export const putObject = async(file:Buffer, fileName:string, mimeType:string) =>
     
         let url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${params.Key}`
 
-        console.log("putObject 29", url);
+        console.log("putObject 33", url);
 
         return {url, key:params.Key};
 
