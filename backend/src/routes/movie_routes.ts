@@ -56,10 +56,6 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 //upload hls
 movieRouter.post('/hls', upload.array('hls_files[]'), async (req, res) => {
 
-  console.log("59", req.files)
-
-  console.log(req.body);
-
   let { title } = req.body;
 
   const files = req.files as Express.Multer.File[];
@@ -72,17 +68,36 @@ movieRouter.post('/hls', upload.array('hls_files[]'), async (req, res) => {
 
     const mimeType = mime.lookup(fileName) || 'application/octet-stream';
 
-    const result = await putObject(file.buffer, fileName, mimeType, title);
+    let result;
 
-    //uploadResults.push({fileName, mimeType})
+    try{
 
-    uploadResults.push({fileName, url: result?.url, key: result?.key})
+      result = await putObject(file.buffer, fileName, mimeType, title);
+    
+    }catch(err){
+
+      console.log(err)
+
+      return res.status(500).json({
+        payload: `failed to add to s3: ${err}`,
+        status: "error"
+      })
+    }
+
+
+    if(fileName.endsWith('.m3u8')){
+
+      uploadResults.unshift({fileName, url: result?.url, key: result?.key})
+    
+    }else{
+
+      uploadResults.push({fileName, url: result?.url, key: result?.key});
+    }
   };
 
-  console.log("78", uploadResults);
+  const filePath = `${title}_hls/${uploadResults[0]?.fileName}`
 
-
-  const isAdded = await addToDatabase(req);
+  const isAdded = await addToDatabase(req, filePath);
 
   if(isAdded.status === "error"){
 
@@ -96,16 +111,19 @@ movieRouter.post('/hls', upload.array('hls_files[]'), async (req, res) => {
     payload: isAdded.data,
     status: "success"
   })
-
-
 })
 
 
-const addToDatabase = async (req: Request) => {
-
-  console.log(req.body)
+const addToDatabase = async (req: Request, filePath: string | null = null) => {
 
   let { title, genre, description, year, length } = req.body;
+
+  let key: string = title;
+
+  if(filePath){
+
+    key = filePath;
+  }
 
   let movieDatabaseRecord
 
@@ -116,7 +134,7 @@ const addToDatabase = async (req: Request) => {
       year = parseInt(year);
     }
 
-    movieDatabaseRecord = await addMovie(title, genre, description, year, length);
+    movieDatabaseRecord = await addMovie(title, key, genre, description, year, length);
   
   }catch(err){
 
@@ -140,7 +158,7 @@ const addToDatabase = async (req: Request) => {
 // upload new movie
 movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Response) => {
 
-  let { title, genre, description, year, length } = req.body;
+  let { title } = req.body;
 
   const file: Express.Multer.File | undefined = req.file;
 
@@ -154,8 +172,6 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
   };
 
   const mimeType = mime.lookup(file.originalname) || 'video/mp4';
-
-  console.log(`uploading file with MIME type ${mimeType}`);
 
   let result;
 
@@ -183,38 +199,23 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
     })
   }
 
-  let movieDatabaseRecord
+  const isAdded = await addToDatabase(req)
 
-  try{
-
-    if (year !== undefined){
-
-      year = parseInt(year);
-    }
-
-    movieDatabaseRecord = await addMovie(title, genre, description, year, length);
-  
-  }catch(err){
-
-    console.log(err);
+  if(isAdded.status === "error"){
 
     return res.status(500).json({
-
-      payload: "movie uploaded to s3 but failed to save to database",
-      url: result.url,
-      key: result.key,
+      payload: "added to s3 but failed to add to database",
       status: "error"
     })
   }
 
-
-  return res.status(201).send({
-
-    payload: movieDatabaseRecord,
+  return res.status(201).json({
+    payload: isAdded.data,
     status: "success"
-  });
+  })
 
 });
+
 
 // delete a movie
 movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
@@ -279,6 +280,7 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
   
   const { key, id } = req.body.film;
 
+console.log(key);
 
   try{
 

@@ -8,16 +8,16 @@ import { type Movie } from '../Types/Types.js';
 
 
 
-export const addMovie = async (title: string, genre: string = "", description: string = "", year: number = 1, length: string = "") => {
+export const addMovie = async (title: string, key: string, genre: string = "", description: string = "", year: number = 1, length: string = "") => {
 
     console.log(typeof year, year);
     
-
+//change this so that if the movie is in a folder, the key will be the file path and the title will remailn the same
     const createMovieEntry = await pool.query(`
             INSERT INTO movies (title, key, genre, description, year, length)
-            VALUES ($1, $1, $2, $3, $4, $5)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *;
-        `, [title, genre, description, year, length])
+        `, [title, key, genre, description, year, length])
     
     .catch((e) => {
 

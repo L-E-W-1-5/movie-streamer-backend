@@ -6,7 +6,7 @@ import { s3Client } from "./s3-credentials.js";
 
 export const putObject = async(file:Buffer, fileName:string, mimeType:string, isHLS: string | null = null) => {
 
-    if(isHLS) fileName = `${fileName}_hls/${fileName}`
+    if(isHLS) fileName = `${isHLS}_hls/${fileName}`
 
     try{
         
