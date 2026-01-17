@@ -9,7 +9,17 @@ const url = 'https://movie-streamer-backend.onrender.com/users/verify_user';
 
 
 
+
+
+
+
+
+
+
+
 export const sendMailSendGrid = async (name:string, email:string, id:number) => {
+
+    //console.log(process.env.SENDGRID_APIKEY)
 
     const msg = {
         from: process.env.EMAIL!,
@@ -21,7 +31,7 @@ export const sendMailSendGrid = async (name:string, email:string, id:number) => 
     };
 
 
-    sgMail.send(msg)
+    await sgMail.send(msg)
 
     .then(() => {
 

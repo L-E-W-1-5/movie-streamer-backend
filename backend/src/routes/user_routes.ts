@@ -56,7 +56,7 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 
     }catch(err){
 
-        console.log(err);
+        console.log("59", err);
 
         return res.status(500).json({
             payload: `error adding user to database, please try again later. ${err}`,
@@ -66,14 +66,16 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 
     try{
 
-        await sendMailSendGrid(name, email, details.id)
+        await sendMailSendGrid(name, email, details.id) //TODO: Issue here!
         //await sendMailToAdmin(name, email, details.id)
 
     }catch(err){
 
-        console.log(err);
+        console.log("new user 74", err);
 
         const deletedUser = await deleteUser(details.id);
+
+        console.log("78 deleted user", deletedUser);
 
         if(!deletedUser){
 

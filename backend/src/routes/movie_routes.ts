@@ -5,7 +5,7 @@ import { deleteObject } from '../util/deleteObjects.js';
 import multer from 'multer';
 import mime from 'mime-types'
 import { verifyToken } from '../middleware/auth.js';
-import { getObjects } from '../util/getObjects.js';
+import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/getObjects.js';
 import { type Movie } from '../Types/Types.js';
 
 
@@ -158,7 +158,7 @@ const addToDatabase = async (req: Request, filePath: string | null = null) => {
 // upload new movie
 movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Response) => {
 
-  let { title } = req.body;
+  let { title } = req.body;  //TODO: could also place single movie files into folders. then i can have the same delete/edit routes
 
   const file: Express.Multer.File | undefined = req.file;
 
@@ -280,21 +280,56 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
   
   const { key, id } = req.body.film;
 
-console.log(key);
-
   try{
 
-    const signedMovie = await getObjects(key)
+    if(!key.includes('.m3u8')){
 
-    if(signedMovie){
+      const signedMovie = await getObjects(key)
 
-      increaseTimesPlayed(id)
+      console.log('m3u8')
 
-      return res.status(200).json({
-        payload: signedMovie, 
-        status: "success"
-      })
+      if(signedMovie){
+
+         increaseTimesPlayed(id)
+
+        return res.status(200).send(signedMovie)
+      }
     }
+
+    const playlistFile = await getObjectUnsigned(key);
+
+
+    console.log(key)
+
+    const slashIndex = key.lastIndexOf('/');
+
+    let directoryPath
+
+    if(slashIndex !== -1){
+
+      directoryPath = key.substring(0, slashIndex);
+    
+    }else{
+
+      directoryPath = ""
+    }
+
+    console.log(directoryPath)
+
+    if(playlistFile){
+
+      const signedPlaylist = await generateSignedPlaylist(playlistFile, directoryPath);
+
+      console.log(signedPlaylist)
+
+      // res.json({
+      //   payload: signedPlaylist,
+      //   status: "success"
+      // })
+
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl').send(signedPlaylist)
+    }
+
   
   }catch(err){
 
