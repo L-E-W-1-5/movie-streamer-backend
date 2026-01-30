@@ -199,7 +199,9 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
     })
   }
 
-  const isAdded = await addToDatabase(req)
+  const filePath = `${title}/${title}`
+
+  const isAdded = await addToDatabase(req, filePath)
 
   if(isAdded.status === "error"){
 
@@ -220,13 +222,13 @@ movieRouter.post('/', upload.single('movie'), async (req: Request,  res: Respons
 // delete a movie
 movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
-  const { title, id } = req.body.movie;
+  const { title, id, key } = req.body.movie;
 
   let s3Return
 
   try{
 
-    s3Return = await deleteObject(title);
+    s3Return = await deleteObject(key);
     console.log(s3Return)
   
   }catch(err){
@@ -271,6 +273,8 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
       })
     }
   }
+
+  return
 
 })
 
@@ -327,7 +331,7 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
       //   status: "success"
       // })
 
-      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl').send(signedPlaylist)
+      res.status(200).setHeader('Content-Type', 'application/vnd.apple.mpegurl').send(signedPlaylist)
     }
 
   
@@ -335,11 +339,10 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
     console.log(err);
 
-    return res.status(400).json({
-      payload: "could not get signed url",
-      status: "error"
-    })
+    return res.status(400).send("failed to get signed url")
+    
   }
+
 })
 
 
