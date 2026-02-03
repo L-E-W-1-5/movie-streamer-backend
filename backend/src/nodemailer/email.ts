@@ -1,22 +1,71 @@
 import nodemailer from 'nodemailer';
-import sgMail from '@sendgrid/mail'
+//import sgMail from '@sendgrid/mail'
 import type { UUID } from 'crypto';
 import type { UUIDTypes } from 'uuid';
+import { Resend } from 'resend';
 
-sgMail.setApiKey(process.env.SENDGRID_APIKEY!);
+//sgMail.setApiKey(process.env.SENDGRID_APIKEY!);
+
+const resendAPI = process.env.RESEND_APIKEY
+
+const resend = new Resend(resendAPI)
+
+const fromEmail = process.env.EMAIL
  
 const url = 'https://movie-streamer-backend.onrender.com/users/verify_user';
 
 
 
 
+export const resendEmail = async (name:string, email:string, id:number) => {
+
+    console.log(name, email, id)
+
+    console.log(resendAPI)
+    
+    const { data, error } = await resend.emails.send({
+        from: 'Acme <onboarding@resend.dev>',
+        to: ['delivered@resend.dev'],
+        subject: 'Hello World',
+        html: '<strong>It works!</strong>',
+    });
+    
+    if(error){
+        
+        console.error(error);
+    }
+    
+    console.log(data);
+
+    const response = await fetch('https://api.resend.com/emails', {
+
+        method: 'POST', 
+
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${resendAPI}`
+        },
+
+        body: JSON.stringify({
+            from: fromEmail,
+            to: ['lewiswootton88@gmail.com'],
+            subject: 'Resend Test',
+            text: 'has it sent? i hope so!'
+        })
+    })
+
+    console.log("57", response)
+
+    throw new Error('test')
+    
+}
 
 
 
 
 
 
-
+/*
 export const sendMailSendGrid = async (name:string, email:string, id:number) => {
 
     //console.log(process.env.SENDGRID_APIKEY)
@@ -78,7 +127,7 @@ export const sendGridToUser = async (guid: UUIDTypes, email: string) => {
     return 'email sent successfully';
 }
 
- 
+ */
 
 //email sent to a newly verified user
 export const sendMailToUser = async (guid: UUID, email:string) => {
@@ -130,7 +179,7 @@ export const sendMailToUser = async (guid: UUID, email:string) => {
 }
 
 // email sent to admin to verify a new user registration
-export const sendMailToAdmin = async (name:string, email:string, id:string) => {
+export const sendMailToAdmin = async (name: string, email: string, id: number) => {
 
     console.log("54", email, name, id)
 
@@ -189,3 +238,4 @@ export const sendMailToAdmin = async (name:string, email:string, id:string) => {
     return;
 
 }
+

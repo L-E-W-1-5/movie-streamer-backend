@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
 import { addUser, getUsers, updateUserVerifiction, updateUserAdmin, deleteUser, createGuid, findUserToLogin, logoutUser, changePassword } from '../database/user_models.js'
-import { sendMailToUser, sendMailToAdmin, sendMailSendGrid, sendGridToUser } from '../nodemailer/email.js';
+import { sendMailToAdmin, sendMailToUser } from '../nodemailer/email.js';
 import jwt from 'jsonwebtoken'
 import { verifyToken } from '../middleware/auth.js';
 
@@ -48,6 +48,8 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 
     const { name, email } = req.body;
 
+    console.log(name, email)
+
     let details
 
     try{
@@ -66,8 +68,9 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 
     try{
 
-        await sendMailSendGrid(name, email, details.id) //TODO: Issue here!
-        //await sendMailToAdmin(name, email, details.id)
+        //await resendEmail(name, email, 5)
+        //await sendMailSendGrid(name, email, details.id) //TODO: Issue here!
+        await sendMailToAdmin(name, email, details.id)
 
     }catch(err){
 
@@ -102,6 +105,8 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 // this is the endpoint for the link in the email sent to admin for user verification 
 userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
+    console.log("verify_user")
+
     const tokenParam = req.query.token;
 
     const token = typeof tokenParam === 'string' ? tokenParam : undefined
@@ -128,6 +133,7 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
         console.log(err)
     }
 
+    console.log("user_verify", confirmed)
 
     if(confirmed){
 
@@ -154,8 +160,10 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
     try{
 
-        //emailSent = await sendMailToUser(confirmed.guid, confirmed.email);
-        emailSent = sendGridToUser(confirmed.guid, confirmed.email);
+        emailSent = await sendMailToUser(confirmed.guid, confirmed.email);
+        //emailSent = sendGridToUser(confirmed.guid, confirmed.email);
+
+        console.log(emailSent)
 
     }catch(err){
 
