@@ -6,16 +6,16 @@ import { Resend } from 'resend';
 
 //sgMail.setApiKey(process.env.SENDGRID_APIKEY!);
 
-const resendAPI = process.env.RESEND_APIKEY
+// const resendAPI = process.env.RESEND_APIKEY
 
-const resend = new Resend(resendAPI)
+// const resend = new Resend(resendAPI)
 
 const fromEmail = process.env.EMAIL
  
 const url = 'https://movie-streamer-backend.onrender.com/users/verify_user';
 
 
-
+/*
 
 export const resendEmail = async (name:string, email:string, id:number) => {
 
@@ -60,7 +60,7 @@ export const resendEmail = async (name:string, email:string, id:number) => {
     
 }
 
-
+*/
 
 
 
@@ -133,6 +133,8 @@ export const sendGridToUser = async (guid: UUIDTypes, email: string) => {
 export const sendMailToUser = async (guid: UUID, email:string) => {
 
     const subject = "Login Details For LuluFlix";
+
+    console.log(email)
 
     try{
          const transporter = nodemailer.createTransport({
