@@ -134,8 +134,6 @@ export const sendMailToUser = async (guid: UUID, email:string) => {
 
     const subject = "Login Details For LuluFlix";
 
-    console.log(email)
-
     try{
          const transporter = nodemailer.createTransport({
 
@@ -183,18 +181,6 @@ export const sendMailToUser = async (guid: UUID, email:string) => {
 // email sent to admin to verify a new user registration
 export const sendMailToAdmin = async (name: string, email: string, id: number) => {
 
-    console.log("54", email, name, id)
-
-    
-    // const transporter = nodemailer.createTransport({
-    //     host: 'smtp.gmail.com',
-    //     port: 587,
-    //     secure: false,
-    //     auth: {
-    //         user: process.env.EMAIL,
-    //         pass: process.env.EMAIL_PASS
-    //     }
-    // });
 
     const transporter = nodemailer.createTransport({
             service: "gmail",
@@ -224,9 +210,11 @@ export const sendMailToAdmin = async (name: string, email: string, id: number) =
             
             }else{
 
-                console.log(info);
+                return {
 
-                throw new Error(`mail not sent`)
+                    payload: info,
+                    status: "success"
+                }
             }
         });
 
