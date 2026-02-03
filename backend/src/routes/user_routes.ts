@@ -105,8 +105,6 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 // this is the endpoint for the link in the email sent to admin for user verification 
 userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
-    console.log("verify_user")
-
     const tokenParam = req.query.token;
 
     const token = typeof tokenParam === 'string' ? tokenParam : undefined
@@ -132,8 +130,6 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
         console.log(err)
     }
-
-    console.log("user_verify", confirmed)
 
     if(confirmed){
 
@@ -163,8 +159,6 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
         emailSent = await sendMailToUser(confirmed.guid, confirmed.email);
         //emailSent = sendGridToUser(confirmed.guid, confirmed.email);
 
-        console.log(emailSent)
-
     }catch(err){
 
         console.log(err);
@@ -184,7 +178,6 @@ userRouter.get('/verify_user', async (req:Request, res:Response) => {
         payload: returnData,
         status: "success"
     })
-
 });
 
 // this is the endpoint to upgrade a user to admin (mainly for my own use, remove 'verifyToken' to use)
