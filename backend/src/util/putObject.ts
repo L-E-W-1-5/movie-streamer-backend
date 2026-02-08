@@ -4,7 +4,7 @@ import { s3Client } from "./s3-credentials.js";
 
 
 
-export const putObject = async(file:Buffer, fileName:string, mimeType:string, isHLS: string | null = null) => {
+export const putObject = async(file: Buffer, fileName: string, mimeType: string, isHLS: string | null = null) => {
 
     if(isHLS){
 
@@ -47,4 +47,9 @@ export const putObject = async(file:Buffer, fileName:string, mimeType:string, is
         console.log(err);
     }
 
+}
+
+export const putImage = (title: string, images: Express.Multer.File[]) => {
+
+    console.log(images, title)
 }

@@ -1,10 +1,26 @@
 import pool from './db.js'
 import { type Movie } from '../Types/Types.js';
 
+type MovieData = {
+    id: number,
+    key: number,
+    title: string,
+    description: string,
+    length: string,
+    year: number,
+    genre: string,
+    timestamp: Date,
+    times_played: number,
+    images: ImageData[]
+}
+    
 
-
-
-
+type ImageData = {
+    id: number,
+    filename: string,
+    mime_type: string,
+    buffer: string
+}
 
 
 
@@ -38,19 +54,84 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 };
 
 
+export const addImage = async (movieId: number, fileName: string, mimeType: string, buffer: Buffer) => {
+
+    const createImageEntry = await pool.query(`
+            INSERT INTO images (movie_id, filename, mime_type, data)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+        `, [movieId, fileName, mimeType, buffer])
+    
+    .catch((err) => {
+
+        console.log(err);
+
+        throw new Error("Image not added to database")
+    })
+
+    return createImageEntry.rows[0]
+};
+
+
+export const deleteImage = async (imageId: number) => {
+
+    const deleteImageEntry = await pool.query(`
+            DELETE FROM images
+            WHERE id = $1
+            RETURNING *
+        `, [imageId])
+    
+    .catch((err) => {
+
+        console.log(err)
+
+        throw new Error("Image not deleted from database", err)
+    })
+
+    console.log(deleteImageEntry.rows)
+
+    return deleteImageEntry.rows[0]
+}
+
+
 export const getMovies = async () => {
 
     const allMovies = await pool.query(`
             SELECT * 
             FROM movies
+            INNER JOIN images
+            ON movies.id = images.movie_id
         `);
+
+    const gptQuery = await pool.query(`
+        SELECT movies.*,
+            COALESCE(
+                JSON_AGG(
+                    JSON_BUILD_OBJECT(
+                        'id', images.id,
+                        'filename', images.filename,
+                        'mime_type', images.mime_type,
+                        'buffer', images.data
+                    )
+                ) 
+                FILTER (WHERE images.id IS NOT NULL),
+                '[]'
+            ) AS images
+            FROM movies
+            LEFT JOIN images ON movies.id = images.movie_id
+            GROUP BY movies.id
+        `)
+
+    //console.log("gpt query data", gptQuery.rows)
 
     if(!allMovies.rows[0]){
 
         throw new Error("movies not loaded");
     }
 
-    return allMovies.rows;
+
+
+    return gptQuery.rows;
 };
 
 

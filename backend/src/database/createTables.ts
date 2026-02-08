@@ -26,6 +26,28 @@ export async function createMovieTable() {
 };
 
 
+export async function createImagesTable() {
+
+    try{
+
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS images (
+                id SERIAL PRIMARY KEY,
+                movie_id INTEGER NOT NULL,
+                filename VARCHAR(255),
+                mime_type VARCHAR(50) NOT NULL,
+                data BYTEA NOT NULL,
+                uploaded_at TIMESTAMP DEFAULT NOW()       
+            );`
+        )
+
+    }catch(err){
+
+        console.log(err);
+    }
+}
+
+
 export const createUsersTable = async() => {
 
     try{
