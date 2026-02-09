@@ -34,9 +34,11 @@ export async function createImagesTable() {
             `CREATE TABLE IF NOT EXISTS images (
                 id SERIAL PRIMARY KEY,
                 movie_id INTEGER NOT NULL,
-                filename VARCHAR(255),
+                key VARCHAR(255),
+                url VARCHAR(255),
                 mime_type VARCHAR(50) NOT NULL,
-                data BYTEA NOT NULL,
+                title VARCHAR(80),
+                original_name VARCHAR(255),
                 uploaded_at TIMESTAMP DEFAULT NOW()       
             );`
         )

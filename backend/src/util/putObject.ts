@@ -40,7 +40,7 @@ export const putObject = async(file: Buffer, fileName: string, mimeType: string,
 
         console.log("putObject 33", url);
 
-        return {url, key:params.Key};
+        return {url, key: params.Key};
 
     }catch(err){
 
@@ -49,7 +49,42 @@ export const putObject = async(file: Buffer, fileName: string, mimeType: string,
 
 }
 
-export const putImage = (title: string, images: Express.Multer.File[]) => {
+export const putImage = async ( originalName: string, title: string, image: Buffer, mimeType: string) => {
 
-    console.log(images, title)
+    console.log(image, title)
+
+    const folderName = `images/${title}/${originalName}`
+
+    try{
+
+        const params = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: `${folderName}`,
+            Body: image,
+            ContentType: mimeType
+        }
+
+        const command = new PutObjectCommand(params);
+        
+        const data = await s3Client.send(command)
+
+        if(data.$metadata.httpStatusCode !== 200){
+
+            return;
+        }
+
+        let url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${params.Key}`
+
+        return {
+            key: folderName,
+            url,
+            mimeType,
+            title,
+            originalName
+        }
+    
+    }catch(err){
+
+        console.log(err)
+    }
 }

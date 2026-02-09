@@ -54,13 +54,16 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 };
 
 
-export const addImage = async (movieId: number, fileName: string, mimeType: string, buffer: Buffer) => {
+export const addImage = async (movieId: number, key: string, url: string, mimeType: string, title: string, originalName: string) => {
+
+    console.log(url)
+
 
     const createImageEntry = await pool.query(`
-            INSERT INTO images (movie_id, filename, mime_type, data)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO images (movie_id, key, url, mime_type, title, original_name)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
-        `, [movieId, fileName, mimeType, buffer])
+        `, [movieId, key, url, mimeType, title, originalName])
     
     .catch((err) => {
 
@@ -99,8 +102,6 @@ export const getMovies = async () => {
     const allMovies = await pool.query(`
             SELECT * 
             FROM movies
-            INNER JOIN images
-            ON movies.id = images.movie_id
         `);
 
     const gptQuery = await pool.query(`
@@ -109,9 +110,11 @@ export const getMovies = async () => {
                 JSON_AGG(
                     JSON_BUILD_OBJECT(
                         'id', images.id,
-                        'filename', images.filename,
+                        'key', images.key,
                         'mime_type', images.mime_type,
-                        'buffer', images.data
+                        'url', images.url,
+                        'movie_title', images.title,
+                        'original_name', images.original_name
                     )
                 ) 
                 FILTER (WHERE images.id IS NOT NULL),
@@ -124,11 +127,36 @@ export const getMovies = async () => {
 
     //console.log("gpt query data", gptQuery.rows)
 
+    
     if(!allMovies.rows[0]){
-
+        
         throw new Error("movies not loaded");
     }
 
+    //console.log(gptQuery.rows)
+
+    // for(let i = 0; i < gptQuery.rows.length; i++){
+
+    //     //console.log("allMovieRows", i, gptQuery.rows[i])
+
+    //     if(gptQuery.rows[i].images && gptQuery.rows[i].images.length > 0){
+
+    //         const bufferSplit = gptQuery.rows[i].images[0].buffer.slice(2)
+
+    //         const bufferTest = gptQuery.rows[i].images[0].buffer.slice(2)
+
+    //         //console.log(bufferSplit)
+
+    //         const base64Image = bufferSplit.toString('base64')
+            
+    //         console.log(i, base64Image.substring(0, 20))
+
+    //         gptQuery.rows[i].images[0].buffer = `data:image/jpeg;base64,${bufferTest}`;
+    //     }
+        
+    // }
+    
+    // console.log(gptQuery.rows)
 
 
     return gptQuery.rows;

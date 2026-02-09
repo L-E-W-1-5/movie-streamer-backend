@@ -4,7 +4,7 @@ import cors from 'cors';
 import morgan from "morgan";
 import userRouter from './routes/user_routes.js'
 import movieRouter from './routes/movie_routes.js'
-import { createImagesTable, createUsersTable, dropTable, checkTableExists, createMovieTable, createMessagesTable } from './database/createTables.js'
+import { createUsersTable, dropTable, checkTableExists, createMovieTable, createMessagesTable, createImagesTable } from './database/createTables.js'
 import messageRouter from './routes/message_routes.js';
 import { verifyToken } from './middleware/auth.js';
 //import { randomBytes } from 'crypto';
@@ -48,9 +48,6 @@ const port = process.env.PORT || 3001;
 
 // testSMTP();
 
-// createImagesTable();
-
-//checkTableExists('images');
 
 app.get('/', (req: Request, res: Response) => {
 
@@ -72,3 +69,17 @@ app.listen(port, () => {
   console.log(`Server is Fire at https://localhost:${port}`);
 
 });
+
+
+
+// {
+// 			"Sid": "Statement1",
+// 			"Effect": "Allow",
+// 			"Principal": "*",
+// 			"Action": [
+// 				"s3:GetObject",
+// 				"s3:PutObject",
+// 				"s3:DeleteObject"
+// 			],
+// 			"Resource": "arn:aws:s3:::luluapps-luluflix-s3/*"
+// 		},

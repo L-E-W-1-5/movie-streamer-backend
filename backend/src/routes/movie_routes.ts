@@ -23,10 +23,18 @@ const uploadFieldsSingle = upload.fields([
   { name: 'images[]', maxCount: 5 },           
 ])
 
-// const uploadFieldsHLS = upload.fields([
-//   { name: 'images', maxCount: 5 },       
-//   { name: 'hls_files[]', maxCount: 1500 }    
-// ])
+const uploadFieldsHLS = upload.fields([
+  { name: 'hls_files[]', maxCount: 1500 },    
+  { name: 'images[]', maxCount: 5 }      
+])
+
+type Images = {
+  key: string,
+  url: string,
+  mimeType: string,
+  title: string,
+  originalName: string
+}
 
 
 // fetch all movies at login 
@@ -64,69 +72,94 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 
 //upload hls
-// movieRouter.post('/hls', upload.array('hls_files[]'), async (req, res) => {
+movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
-//   console.log("hls")
+  console.log("hls")
 
-//   let { title } = req.body;
+  let { title } = req.body;
 
-//   const files = req.files as Express.Multer.File[];
+  const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
 
-//   const uploadResults = [];
+  const hlsFiles = files['hls_files[]']
 
-//   for(const file of files){
+  const images = files['images']
 
-//     const fileName = file.originalname// || file['relativePath'];
+  const uploadResults = [];
 
-//     const mimeType = mime.lookup(fileName) || 'application/octet-stream';
+  let imageLocations = []
 
-//     let result;
+  if(images){
 
-//     try{
+    for(const image of images){
 
-//       result = await putObject(file.buffer, fileName, mimeType, title);
+      const imageRes = await putImage(image.originalname, title, image.buffer, image.mimetype)
+
+      if(imageRes){
+
+        imageLocations.push(imageRes);
+      }
+
+    }
+  }
+
+  console.log(imageLocations);
+
+  if(hlsFiles){
+
+    for(const file of hlsFiles){
+
+      const fileName = file.originalname// || file['relativePath'];
+
+      const mimeType = mime.lookup(fileName) || 'application/octet-stream';
+
+      let result;
+
+      try{
+
+        result = await putObject(file.buffer, fileName, mimeType, title);
     
-//     }catch(err){
+      }catch(err){
 
-//       console.log(err)
+        console.log(err)
 
-//       return res.status(500).json({
-//         payload: `failed to add to s3: ${err}`,
-//         status: "error"
-//       })
-//     }
+        return res.status(500).json({
+          payload: `failed to add to s3: ${err}`,
+          status: "error"
+        })
+      }
 
 
-//     if(fileName.endsWith('.m3u8')){
+      if(fileName.endsWith('.m3u8')){
 
-//       uploadResults.unshift({fileName, url: result?.url, key: result?.key})
+        uploadResults.unshift({fileName, url: result?.url, key: result?.key})
     
-//     }else{
+      }else{
 
-//       uploadResults.push({fileName, url: result?.url, key: result?.key});
-//     }
-//   };
+        uploadResults.push({fileName, url: result?.url, key: result?.key});
+      }
+    };
+  }
 
-//   const filePath = `${title}_hls/${uploadResults[0]?.fileName}`
+  const filePath = `${title}_hls/${uploadResults[0]?.fileName}`
 
-//   const isAdded = await addToDatabase(req, filePath);
+  const isAdded = await addToDatabase(req, filePath, imageLocations);
 
-//   if(isAdded.status === "error"){
+  if(isAdded.status === "error"){
 
-//     return res.status(500).json({
-//       payload: "added to s3 but failed to add to database",
-//       status: "error"
-//     })
-//   }
+    return res.status(500).json({
+      payload: "added to s3 but failed to add to database",
+      status: "error"
+    })
+  }
 
-//   return res.status(201).json({
-//     payload: isAdded.data,
-//     status: "success"
-//   })
-// })
+  return res.status(201).json({
+    payload: isAdded.data,
+    status: "success"
+  })
+})
 
 
-const addToDatabase = async (req: Request, filePath: string | null = null, images: Express.Multer.File[] = []) => {
+const addToDatabase = async (req: Request, filePath: string | null = null, imageLocations: Images[] | []) => {
 
   let { title, genre, description, year, length } = req.body;
 
@@ -139,6 +172,8 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
 
   let movieDatabaseRecord
 
+  console.log("150", imageLocations)
+
   try{
 
     if (year !== undefined){
@@ -148,32 +183,25 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
 
     movieDatabaseRecord = await addMovie(title, key, genre, description, year, length);
 
+    if(imageLocations.length > 0){
 
-    for(const image of images){
+      for(const image of imageLocations){
 
-      console.log(image)
+        try{
 
-      try{
-
-        const isImageAdded = await addImage(movieDatabaseRecord.id, image.originalname, image.mimetype, image.buffer)
-    
-        console.log(isImageAdded);
-
+          const imageRes = await addImage(movieDatabaseRecord.id, image.key, image.url, image.mimeType, image.title, image.originalName)
       
-    
-      }catch(err){
+          console.log(imageRes)
 
-        console.error(err);
+        }catch(err){
 
-        return {
+          console.error(err)
 
-          data: "image not added",
-          status: "error"
         }
       }
- 
-  }
-  
+
+    }
+
   }catch(err){
 
     console.log(err);
@@ -183,6 +211,7 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
       data: "not added",
       status: "error"
     }
+
   }
 
   return {
@@ -190,8 +219,6 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
     data: movieDatabaseRecord,
     status: "success"
   };
-
-  
 }
 
 
@@ -206,22 +233,28 @@ movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) =
   
   const movie = files['movie']
 
-  // if(!movie || !movie[0]) return
-
-  
-
-  // console.log(file);
+  let imageLocations: Images[] = []
 
 
+  if(images && images.length > 0){
 
-  // if(images){
+    for(const image of images){
 
-  //   putImage(title, images)
-  // }
+      const imageRes = await putImage(image.originalname, title, image.buffer, image.mimetype)
 
- //addToDatabase(req, "filePath", images);
-  
-  
+      console.log(imageRes)
+
+      if(imageRes){
+
+        imageLocations.push(imageRes)
+      }
+
+    }
+
+  }
+
+  console.log(imageLocations)
+
 
   if(!title || typeof title !== 'string' || !movie || !movie[0]){ // || !genre || typeof genre !== 'string'
 
@@ -264,7 +297,13 @@ movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) =
 
   const filePath = `${title}/${title}`
 
-  const isAdded = await addToDatabase(req, filePath, images)
+
+
+
+    const isAdded = await addToDatabase(req, filePath, imageLocations)
+  
+  
+
 
   if(isAdded.status === "error"){
 
