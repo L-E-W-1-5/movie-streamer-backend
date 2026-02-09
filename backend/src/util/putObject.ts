@@ -73,7 +73,13 @@ export const putImage = async ( originalName: string, title: string, image: Buff
             return;
         }
 
-        let url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${params.Key}`
+        const keySpaceChange = params.Key.replaceAll(" ", "+")
+
+        console.log(params.Key, keySpaceChange)
+
+        let url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${keySpaceChange}`
+
+        console.log(url)
 
         return {
             key: folderName,

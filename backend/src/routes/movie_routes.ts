@@ -478,3 +478,28 @@ movieRouter.post('/update_movie', verifyToken, (req, res) => {
 
 
 export default movieRouter
+
+
+// {
+//     "Version": "2012-10-17",
+//     "Statement": [
+//         {
+//             "Sid": "Statement1",
+//             "Effect": "Allow",
+//             "Principal": "*",
+//             "Action": [
+//                 "s3:GetObject",
+//                 "s3:PutObject",
+//                 "s3:DeleteObject"
+//             ],
+//             "Resource": "arn:aws:s3:::luluapps-luluflix-s3/*"
+//         },
+//         {
+//             "Sid": "AllowPublicReadForSpecificFolder",
+//             "Effect": "Allow",
+//             "Principal": "*",
+//             "Action": "s3:GetObject",
+//             "Resource": "arn:aws:s3:::luluapps-luluflix-s3/images/*"
+//         }
+//     ]
+// }
