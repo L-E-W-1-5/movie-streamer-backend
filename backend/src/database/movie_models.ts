@@ -99,11 +99,6 @@ export const deleteImage = async (imageId: number) => {
 
 export const getMovies = async () => {
 
-    const allMovies = await pool.query(`
-            SELECT * 
-            FROM movies
-        `);
-
     const gptQuery = await pool.query(`
         SELECT movies.*,
             COALESCE(
@@ -112,9 +107,10 @@ export const getMovies = async () => {
                         'id', images.id,
                         'key', images.key,
                         'mime_type', images.mime_type,
-                        'url', images.url,
                         'movie_title', images.title,
-                        'original_name', images.original_name
+                        'original_name', images.original_name,
+                        'movie_id', images.movie_id,
+                        'url', images.url
                     )
                 ) 
                 FILTER (WHERE images.id IS NOT NULL),
@@ -125,39 +121,10 @@ export const getMovies = async () => {
             GROUP BY movies.id
         `)
 
-    //console.log("gpt query data", gptQuery.rows)
-
-    
-    if(!allMovies.rows[0]){
+    if(!gptQuery.rows[0]){
         
         throw new Error("movies not loaded");
     }
-
-    //console.log(gptQuery.rows)
-
-    // for(let i = 0; i < gptQuery.rows.length; i++){
-
-    //     //console.log("allMovieRows", i, gptQuery.rows[i])
-
-    //     if(gptQuery.rows[i].images && gptQuery.rows[i].images.length > 0){
-
-    //         const bufferSplit = gptQuery.rows[i].images[0].buffer.slice(2)
-
-    //         const bufferTest = gptQuery.rows[i].images[0].buffer.slice(2)
-
-    //         //console.log(bufferSplit)
-
-    //         const base64Image = bufferSplit.toString('base64')
-            
-    //         console.log(i, base64Image.substring(0, 20))
-
-    //         gptQuery.rows[i].images[0].buffer = `data:image/jpeg;base64,${bufferTest}`;
-    //     }
-        
-    // }
-    
-    // console.log(gptQuery.rows)
-
 
     return gptQuery.rows;
 };

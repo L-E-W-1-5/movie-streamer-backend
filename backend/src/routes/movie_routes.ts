@@ -170,7 +170,7 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
     key = filePath;
   }
 
-  let movieDatabaseRecord
+  let movieDatabaseRecord, imageDatabaseRecord = []
 
   console.log("150", imageLocations)
 
@@ -183,6 +183,8 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
 
     movieDatabaseRecord = await addMovie(title, key, genre, description, year, length);
 
+    
+
     if(imageLocations.length > 0){
 
       for(const image of imageLocations){
@@ -192,6 +194,10 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
           const imageRes = await addImage(movieDatabaseRecord.id, image.key, image.url, image.mimeType, image.title, image.originalName)
       
           console.log(imageRes)
+
+          imageDatabaseRecord.push(imageRes);
+
+          //TODO: add imageRes to the returned object so the image can be shown straight away
 
         }catch(err){
 
@@ -213,6 +219,12 @@ const addToDatabase = async (req: Request, filePath: string | null = null, image
     }
 
   }
+
+  console.log(imageDatabaseRecord);
+
+  movieDatabaseRecord.images = imageDatabaseRecord;
+
+  console.log(movieDatabaseRecord);
 
   return {
 
@@ -297,14 +309,8 @@ movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) =
 
   const filePath = `${title}/${title}`
 
-
-
-
-    const isAdded = await addToDatabase(req, filePath, imageLocations)
+  const isAdded = await addToDatabase(req, filePath, imageLocations)
   
-  
-
-
   if(isAdded.status === "error"){
 
     return res.status(500).json({
