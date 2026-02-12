@@ -1,5 +1,6 @@
 import pool from './db.js'
-import { type Movie } from '../Types/Types.js';
+import express, { type Express, type Request, type Response , type Application } from 'express';
+import { type Movie, type Images } from '../Types/Types.js';
 
 type MovieData = {
     id: number,
@@ -93,7 +94,10 @@ export const deleteImage = async (imageId: number) => {
 
     console.log(deleteImageEntry.rows)
 
-    return deleteImageEntry.rows[0]
+    return {
+        payload: deleteImageEntry.rows[0],
+        status: "success"
+    }
 }
 
 
@@ -149,9 +153,8 @@ export const deleteMovie = async (id: string) => {
 };
 
 
-export const updateMovieDetails = async (movie: Movie) => {
+export const updateMovieDetails = async (title: string, description: string = "", genre: string = "", year: number = 1, id: number, length: string = "") => {
 
-    let { title, description, genre, year, id, length } = movie
 
     const updatedMovie = await pool.query(`
             UPDATE movies
@@ -188,4 +191,79 @@ export const increaseTimesPlayed = async (id: number) => {
             WHERE id = $1
         `, [id])
 
+}
+
+
+export const addToDatabase = async (req: Request, filePath: string | null = null, imageLocations: Images[] | []) => {
+
+  let { title, genre, description, year, length } = req.body;
+
+  let key: string = title;
+
+  if(filePath){
+
+    key = filePath;
+  }
+
+  let movieDatabaseRecord, imageDatabaseRecord = []
+
+  console.log("150", imageLocations)
+
+  try{
+
+    if (year !== undefined){
+
+      year = parseInt(year);
+    }
+
+    movieDatabaseRecord = await addMovie(title, key, genre, description, year, length);
+
+    
+
+    if(imageLocations.length > 0){
+
+      for(const image of imageLocations){
+
+        try{
+
+          const imageRes = await addImage(movieDatabaseRecord.id, image.key, image.url, image.mimeType, image.title, image.originalName)
+      
+          console.log(imageRes)
+
+          imageDatabaseRecord.push(imageRes);
+
+          //TODO: add imageRes to the returned object so the image can be shown straight away
+
+        }catch(err){
+
+          console.error(err)
+
+        }
+      }
+
+    }
+
+  }catch(err){
+
+    console.log(err);
+
+    return {
+
+      data: "not added",
+      status: "error"
+    }
+
+  }
+
+  console.log(imageDatabaseRecord);
+
+  movieDatabaseRecord.images = imageDatabaseRecord;
+
+  console.log(movieDatabaseRecord);
+
+  return {
+
+    data: movieDatabaseRecord,
+    status: "success"
+  };
 }

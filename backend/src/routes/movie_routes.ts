@@ -1,12 +1,12 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage } from '../database/movie_models.js'
+import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
-import { deleteObject } from '../util/deleteObjects.js';
+import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
 import mime from 'mime-types'
 import { verifyToken } from '../middleware/auth.js';
 import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/getObjects.js';
-import { type Movie } from '../Types/Types.js';
+import { type Movie, type Images } from '../Types/Types.js';
 
 
 const movieRouter = express.Router();
@@ -28,13 +28,11 @@ const uploadFieldsHLS = upload.fields([
   { name: 'images[]', maxCount: 5 }      
 ])
 
-type Images = {
-  key: string,
-  url: string,
-  mimeType: string,
-  title: string,
-  originalName: string
-}
+const uploadImage = upload.fields([
+  { name: 'image[]', maxCount: 2 }
+])
+
+
 
 
 // fetch all movies at login 
@@ -69,6 +67,8 @@ movieRouter.get('/', async (req:Request, res: Response) => {
     status: "success"
   })
 });
+
+
 
 
 //upload hls
@@ -159,79 +159,6 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 })
 
 
-const addToDatabase = async (req: Request, filePath: string | null = null, imageLocations: Images[] | []) => {
-
-  let { title, genre, description, year, length } = req.body;
-
-  let key: string = title;
-
-  if(filePath){
-
-    key = filePath;
-  }
-
-  let movieDatabaseRecord, imageDatabaseRecord = []
-
-  console.log("150", imageLocations)
-
-  try{
-
-    if (year !== undefined){
-
-      year = parseInt(year);
-    }
-
-    movieDatabaseRecord = await addMovie(title, key, genre, description, year, length);
-
-    
-
-    if(imageLocations.length > 0){
-
-      for(const image of imageLocations){
-
-        try{
-
-          const imageRes = await addImage(movieDatabaseRecord.id, image.key, image.url, image.mimeType, image.title, image.originalName)
-      
-          console.log(imageRes)
-
-          imageDatabaseRecord.push(imageRes);
-
-          //TODO: add imageRes to the returned object so the image can be shown straight away
-
-        }catch(err){
-
-          console.error(err)
-
-        }
-      }
-
-    }
-
-  }catch(err){
-
-    console.log(err);
-
-    return {
-
-      data: "not added",
-      status: "error"
-    }
-
-  }
-
-  console.log(imageDatabaseRecord);
-
-  movieDatabaseRecord.images = imageDatabaseRecord;
-
-  console.log(movieDatabaseRecord);
-
-  return {
-
-    data: movieDatabaseRecord,
-    status: "success"
-  };
-}
 
 
 // upload new movie
@@ -327,6 +254,8 @@ movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) =
 });
 
 
+
+
 // delete a movie
 movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
@@ -386,6 +315,9 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
 })
 
+
+
+
 // fetch movie from s3
 movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
@@ -432,13 +364,6 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
       const signedPlaylist = await generateSignedPlaylist(playlistFile, directoryPath);
 
-      //console.log(signedPlaylist)
-
-      // res.json({
-      //   payload: signedPlaylist,
-      //   status: "success"
-      // })
-
       res.status(200).setHeader('Content-Type', 'application/vnd.apple.mpegurl').send(signedPlaylist)
     }
 
@@ -450,21 +375,40 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
     return res.status(400).send("failed to get signed url")
     
   }
-
 })
 
 
-movieRouter.post('/update_movie', verifyToken, (req, res) => {
 
-  console.log(req.body)
+//update movie details and/or images
+movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => {
 
-  const movie: Movie = req.body.edit;
+  let { title, description, genre, year, id, length } = req.body;
 
-  console.log(movie);
- 
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+  const image = files['image[]'];
+
+  let imageDBResponses = []
+
+
+  if(image && image.length > 0){
+
+    for(const i of image){
+
+      const reply = await putImage(i.originalname, title, i.buffer, i.mimetype)
+
+      if(reply){
+
+        const dbRecord = addImage(id, reply.key, reply.url, reply.mimeType, title, i.originalname)
+
+        imageDBResponses.push(dbRecord)
+      }
+    }
+  }
+
   try{
 
-    updateMovieDetails(movie)
+    updateMovieDetails(title, description, genre, year, id, length)
   
   }catch(err){
 
@@ -475,12 +419,64 @@ movieRouter.post('/update_movie', verifyToken, (req, res) => {
       status: "error"
     })
   }
-
+  
   res.status(200).json({
     payload: "movie details updated",
     status: "success"
   })
 })
+
+
+
+// delete an image from a movie
+movieRouter.post('/image_delete', verifyToken, async (req, res) => {
+
+  const image = req.body.image
+
+  console.log(image)
+
+  if(!image.key || !image.id) return
+
+  try{
+
+    const dbReply = await deleteImage(image.id)
+    
+    if(dbReply?.status === "success"){
+      
+      const reply = await deleteImageFromS3(image.key);
+
+      console.log(reply)
+      
+      if(reply.status === "success"){
+
+        return res.status(201).json({
+
+          payload: "image deleted from s3 and database successfully",
+          status: "success"
+        })
+      }
+    
+    }
+  
+  }catch(err){
+
+    console.error(err)
+
+    return res.status(500).json({
+
+      payload: "Server error, image not deleted",
+      status: "error"
+    })
+  }
+
+  return res.status(500).json({
+
+      payload: "Server error, image not deleted",
+      status: "error"
+    })
+
+})
+
 
 
 export default movieRouter

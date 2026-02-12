@@ -9,3 +9,11 @@ export interface Movie {
     timestamp: Date,
     times_played: number
 };
+
+export type Images = {
+  key: string,
+  url: string,
+  mimeType: string,
+  title: string,
+  originalName: string
+}

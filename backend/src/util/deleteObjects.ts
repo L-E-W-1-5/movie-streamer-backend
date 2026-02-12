@@ -1,15 +1,11 @@
-import { DeleteObjectCommand } from "@aws-sdk/client-s3"
 import { s3Client } from "./s3-credentials.js"
+import { ListObjectsV2Command, DeleteObjectsCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 
 
 export const deleteObject = async (fileName: string) => {
 
     const folderName = fileName.substring(0, fileName.indexOf('/'));
-
-    console.log(folderName, fileName)
-
-  
 
     try{
 
@@ -78,6 +74,38 @@ export const deleteObject = async (fileName: string) => {
 }
 
 
+export const deleteImageFromS3 = async (filePath: string) => {
+
+  try{
+
+    const params = {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: filePath,
+        };
+
+    const command = new DeleteObjectCommand(params)
+
+    const data = await s3Client.send(command)
+
+    console.log(data)
+  
+  }catch(err){
+
+    console.log(err)
+
+    return {
+      payload: "failed to delete image",
+      status: "error"
+    }
+  }
+
+  return {
+    payload: "image deleted",
+    status: "success"
+  }
+}
+
+/*
 import { ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 
 async function deleteFolder(folderPrefix: string) {
@@ -110,3 +138,5 @@ async function deleteFolder(folderPrefix: string) {
     console.error('Error deleting folder:', err);
   }
 }
+
+*/
