@@ -166,6 +166,7 @@ export const updateMovieDetails = async (title: string, description: string = ""
             WHERE id = $6
             RETURNING *
         `, [title, description, genre, year, length, id])
+
     .catch((err) => {
 
         console.log(err);
@@ -226,22 +227,16 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
 
         try{
 
-          const imageRes = await addImage(movieDatabaseRecord.id, image.key, image.url, image.mimeType, image.title, image.originalName)
-      
-          console.log(imageRes)
+          const imageRes = await addImage(movieDatabaseRecord.id, image.key, image.url, image.mimeType, image.title, image.originalName);
 
           imageDatabaseRecord.push(imageRes);
-
-          //TODO: add imageRes to the returned object so the image can be shown straight away
 
         }catch(err){
 
           console.error(err)
-
-        }
-      }
-
-    }
+        };
+      };
+    };
 
   }catch(err){
 
@@ -251,15 +246,10 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
 
       data: "not added",
       status: "error"
-    }
-
-  }
-
-  console.log(imageDatabaseRecord);
+    };
+  };
 
   movieDatabaseRecord.images = imageDatabaseRecord;
-
-  console.log(movieDatabaseRecord);
 
   return {
 

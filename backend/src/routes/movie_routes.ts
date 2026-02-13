@@ -74,8 +74,6 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 //upload hls
 movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
-  console.log("hls")
-
   let { title } = req.body;
 
   const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
@@ -86,7 +84,7 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
   const uploadResults = [];
 
-  let imageLocations = []
+  let imageLocations = [];
 
   if(images){
 
@@ -97,12 +95,10 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
       if(imageRes){
 
         imageLocations.push(imageRes);
-      }
+      };
 
-    }
-  }
-
-  console.log(imageLocations);
+    };
+  };
 
   if(hlsFiles){
 
@@ -162,7 +158,7 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
 
 // upload new movie
-movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) => {
+movieRouter.post('/', uploadFieldsSingle, verifyToken, async (req: Request,  res: Response) => {
 
   let { title } = req.body;  
 
@@ -181,19 +177,13 @@ movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) =
 
       const imageRes = await putImage(image.originalname, title, image.buffer, image.mimetype)
 
-      console.log(imageRes)
-
       if(imageRes){
 
         imageLocations.push(imageRes)
-      }
+      };
 
-    }
-
-  }
-
-  console.log(imageLocations)
-
+    };
+  };
 
   if(!title || typeof title !== 'string' || !movie || !movie[0]){ // || !genre || typeof genre !== 'string'
 
@@ -386,20 +376,22 @@ movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => 
 
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-  const image = files['image[]'];
+  const images = files['image[]'];
 
-  let imageDBResponses = []
+  let imageDBResponses: Images[] = []
+
+  let updatedMovie
 
 
-  if(image && image.length > 0){
+  if(images && images.length > 0){
 
-    for(const i of image){
+    for(const image of images){
 
-      const reply = await putImage(i.originalname, title, i.buffer, i.mimetype)
+      const reply = await putImage(image.originalname, title, image.buffer, image.mimetype)
 
       if(reply){
 
-        const dbRecord = addImage(id, reply.key, reply.url, reply.mimeType, title, i.originalname)
+        const dbRecord = await addImage(id, reply.key, reply.url, reply.mimeType, title, image.originalname)
 
         imageDBResponses.push(dbRecord)
       }
@@ -408,7 +400,7 @@ movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => 
 
   try{
 
-    updateMovieDetails(title, description, genre, year, id, length)
+    updatedMovie = await updateMovieDetails(title, description, genre, year, id, length)
   
   }catch(err){
 
@@ -419,9 +411,13 @@ movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => 
       status: "error"
     })
   }
+
+  updatedMovie.images = imageDBResponses;
+
+  console.log(updatedMovie)
   
   res.status(200).json({
-    payload: "movie details updated",
+    payload: updatedMovie,
     status: "success"
   })
 })
