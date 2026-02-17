@@ -412,7 +412,11 @@ movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => 
     })
   }
 
-  updatedMovie.images = imageDBResponses;
+  console.log(updatedMovie)
+
+  if(imageDBResponses.length > 0) updatedMovie.images = imageDBResponses;  //Changed this to a push from '='
+
+  
 
   console.log(updatedMovie)
   
@@ -420,6 +424,8 @@ movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => 
     payload: updatedMovie,
     status: "success"
   })
+
+  
 })
 
 
@@ -429,7 +435,7 @@ movieRouter.post('/image_delete', verifyToken, async (req, res) => {
 
   const image = req.body.image
 
-  console.log(image)
+  //console.log(image)
 
   if(!image.key || !image.id) return
 
@@ -441,13 +447,13 @@ movieRouter.post('/image_delete', verifyToken, async (req, res) => {
       
       const reply = await deleteImageFromS3(image.key);
 
-      console.log(reply)
+      console.log(dbReply)
       
       if(reply.status === "success"){
 
         return res.status(201).json({
 
-          payload: "image deleted from s3 and database successfully",
+          payload: dbReply.payload,
           status: "success"
         })
       }
