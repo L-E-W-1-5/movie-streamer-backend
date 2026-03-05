@@ -4,7 +4,7 @@ import cors from 'cors';
 import morgan from "morgan";
 import userRouter from './routes/user_routes.js'
 import movieRouter from './routes/movie_routes.js'
-import { createUsersTable, dropTable, checkTableExists, createMovieTable, createMessagesTable, createImagesTable } from './database/createTables.js'
+import { updateImagesTable, createUsersTable, dropTable, checkTableExists, createMovieTable, createMessagesTable, createImagesTable } from './database/createTables.js'
 import messageRouter from './routes/message_routes.js';
 import { verifyToken } from './middleware/auth.js';
 //import { randomBytes } from 'crypto';
@@ -47,6 +47,8 @@ const port = process.env.PORT || 3001;
 
 
 // testSMTP();
+
+
 
 
 app.get('/', (req: Request, res: Response) => {

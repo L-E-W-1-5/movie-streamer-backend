@@ -133,3 +133,13 @@ export async function checkTableExists(table: string) {
         return false;
     }
 }
+
+
+export const updateImagesTable = async () => {
+
+    const result = await pool.query(`
+            ALTER TABLE images ADD COLUMN usage VARCHAR(20);
+        `)
+
+    console.log(result);
+}

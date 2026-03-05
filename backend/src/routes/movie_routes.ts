@@ -1,5 +1,5 @@
 import express, { type Express, type Request, type Response , type Application } from 'express';
-import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase } from '../database/movie_models.js'
+import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
@@ -29,7 +29,7 @@ const uploadFieldsHLS = upload.fields([
 ])
 
 const uploadImage = upload.fields([
-  { name: 'image[]', maxCount: 2 }
+  { name: 'image[]', maxCount: 50 }
 ])
 
 
@@ -382,16 +382,21 @@ movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => 
 
   let updatedMovie
 
+  console.log(images)
+
+//TODO: put this in try/catch
 
   if(images && images.length > 0){
 
     for(const image of images){
 
+      const usage = req.body[image.originalname] ? req.body[image.originalname] : null;
+
       const reply = await putImage(image.originalname, title, image.buffer, image.mimetype)
 
       if(reply){
 
-        const dbRecord = await addImage(id, reply.key, reply.url, reply.mimeType, title, image.originalname)
+        const dbRecord = await addImage(id, reply.key, reply.url, reply.mimeType, title, image.originalname, usage)
 
         imageDBResponses.push(dbRecord)
       }
@@ -477,7 +482,60 @@ movieRouter.post('/image_delete', verifyToken, async (req, res) => {
       status: "error"
     })
 
-})
+});
+
+
+movieRouter.post('/update_image', uploadImage, verifyToken, async (req, res) => {
+
+  //const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+  //const images = files['imagesUp[]']
+
+  const { imagesUp } = req.body
+
+  console.log("494", imagesUp)
+
+  if(imagesUp){
+
+    for(const image of imagesUp){
+
+      try{
+
+        const usage = req.body[image] ? req.body[image] : "other";
+
+        const updated = await updateImage(Number(image), usage)
+
+        console.log(updated, image, usage); //updated
+      
+      }catch(err){
+
+        console.log(err);
+
+        return res.status(500).json({
+
+          payload: err,
+          status: "error"
+        });
+
+      };
+
+    };
+
+    return res.status(200).json({
+  
+      payload: "usages changed successfully",
+      status: "success"
+    });
+
+  };
+
+  res.status(500).json({
+
+    payload: "no images to update",
+    status: "error"
+  });
+
+});
 
 
 

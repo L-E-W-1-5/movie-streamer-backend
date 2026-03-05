@@ -55,51 +55,6 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 };
 
 
-export const addImage = async (movieId: number, key: string, url: string, mimeType: string, title: string, originalName: string) => {
-
-    console.log(url)
-
-
-    const createImageEntry = await pool.query(`
-            INSERT INTO images (movie_id, key, url, mime_type, title, original_name)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-        `, [movieId, key, url, mimeType, title, originalName])
-    
-    .catch((err) => {
-
-        console.log(err);
-
-        throw new Error("Image not added to database")
-    })
-
-    return createImageEntry.rows[0]
-};
-
-
-export const deleteImage = async (imageId: number) => {
-
-    const deleteImageEntry = await pool.query(`
-            DELETE FROM images
-            WHERE id = $1
-            RETURNING *
-        `, [imageId])
-    
-    .catch((err) => {
-
-        console.log(err)
-
-        throw new Error("Image not deleted from database", err)
-    })
-
-    console.log(deleteImageEntry.rows)
-
-    return {
-        payload: deleteImageEntry.rows[0],
-        status: "success"
-    }
-}
-
 
 export const getMovies = async () => {
 
@@ -114,7 +69,8 @@ export const getMovies = async () => {
                         'movie_title', images.title,
                         'original_name', images.original_name,
                         'movie_id', images.movie_id,
-                        'url', images.url
+                        'url', images.url,
+                        'usage', images.usage
                     )
                 ) 
                 FILTER (WHERE images.id IS NOT NULL),
@@ -134,6 +90,7 @@ export const getMovies = async () => {
 };
 
 
+
 export const deleteMovie = async (id: string) => {
 
     const movie = await pool.query(`
@@ -151,6 +108,7 @@ export const deleteMovie = async (id: string) => {
 
     return movie.rows[0];
 };
+
 
 
 export const updateMovieDetails = async (title: string, description: string = "", genre: string = "", year: number = 1, id: number, length: string = "") => {
@@ -183,6 +141,8 @@ export const updateMovieDetails = async (title: string, description: string = ""
         return `error updating database`;
     }
 };
+
+
 
 export const increaseTimesPlayed = async (id: number) => {
 
@@ -256,4 +216,79 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
     data: movieDatabaseRecord,
     status: "success"
   };
+}
+
+
+
+export const addImage = async (movieId: number, key: string, url: string, mimeType: string, title: string, originalName: string, usage: string | null = null) => {
+
+    console.log(url)
+
+
+    const createImageEntry = await pool.query(`
+            INSERT INTO images (movie_id, key, url, mime_type, title, original_name, usage)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+        `, [movieId, key, url, mimeType, title, originalName, usage])
+    
+    .catch((err) => {
+
+        console.log(err);
+
+        throw new Error("Image not added to database")
+    })
+
+    return createImageEntry.rows[0]
+};
+
+
+export const deleteImage = async (imageId: number) => {
+
+    const deleteImageEntry = await pool.query(`
+            DELETE FROM images
+            WHERE id = $1
+            RETURNING *
+        `, [imageId])
+    
+    .catch((err) => {
+
+        console.log(err)
+
+        throw new Error("Image not deleted from database", err)
+    })
+
+    console.log(deleteImageEntry.rows)
+
+    return {
+        payload: deleteImageEntry.rows[0],
+        status: "success"
+    }
+}
+
+
+
+export const updateImage = async (key: number, usage: string) => {
+
+    console.log(key, usage);
+
+    let updatedImage;
+
+    try{
+        updatedImage = await pool.query(`
+            UPDATE images
+            SET usage = $2
+            WHERE id = $1
+            RETURNING *
+        `, [key, usage]);
+    
+    }catch(err){
+
+        throw new Error(`error when updating image usage on image ${key}, usage ${usage}`);
+    };
+
+    
+
+    console.log(updatedImage.rows[0]);
+
+    return updatedImage.rows[0] ? true : false
 }
