@@ -269,7 +269,6 @@ export const deleteImage = async (imageId: number) => {
 
 export const updateImage = async (key: number, usage: string) => {
 
-    console.log(key, usage);
 
     let updatedImage;
 
@@ -286,9 +285,6 @@ export const updateImage = async (key: number, usage: string) => {
         throw new Error(`error when updating image usage on image ${key}, usage ${usage}`);
     };
 
-    
-
-    console.log(updatedImage.rows[0]);
 
     return updatedImage.rows[0] ? true : false
 }

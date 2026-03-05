@@ -487,13 +487,8 @@ movieRouter.post('/image_delete', verifyToken, async (req, res) => {
 
 movieRouter.post('/update_image', uploadImage, verifyToken, async (req, res) => {
 
-  //const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
-  //const images = files['imagesUp[]']
 
   const { imagesUp } = req.body
-
-  console.log("494", imagesUp)
 
   if(imagesUp){
 
@@ -503,9 +498,8 @@ movieRouter.post('/update_image', uploadImage, verifyToken, async (req, res) => 
 
         const usage = req.body[image] ? req.body[image] : "other";
 
-        const updated = await updateImage(Number(image), usage)
+        await updateImage(Number(image), usage)
 
-        console.log(updated, image, usage); //updated
       
       }catch(err){
 
