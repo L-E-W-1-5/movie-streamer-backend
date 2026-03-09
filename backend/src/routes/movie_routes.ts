@@ -487,8 +487,10 @@ movieRouter.post('/image_delete', verifyToken, async (req, res) => {
 
 movieRouter.post('/update_image', uploadImage, verifyToken, async (req, res) => {
 
-
+  
   const { imagesUp } = req.body
+  
+  console.log(imagesUp)
 
   if(imagesUp){
 
@@ -498,7 +500,7 @@ movieRouter.post('/update_image', uploadImage, verifyToken, async (req, res) => 
 
         const usage = req.body[image] ? req.body[image] : "other";
 
-        await updateImage(Number(image), usage)
+        await updateImage(Number(image), usage);
 
       
       }catch(err){
