@@ -489,8 +489,6 @@ movieRouter.post('/update_image', uploadImage, verifyToken, async (req, res) => 
 
   
   const { imagesUp } = req.body
-  
-  console.log(imagesUp)
 
   if(imagesUp){
 
