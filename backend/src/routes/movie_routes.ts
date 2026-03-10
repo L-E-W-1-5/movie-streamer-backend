@@ -9,6 +9,7 @@ import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/ge
 import { type Movie, type Images } from '../Types/Types.js';
 
 
+
 const movieRouter = express.Router();
 
 const storage = multer.memoryStorage();
@@ -86,6 +87,8 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
   let imageLocations = [];
 
+  console.log("here", hlsFiles);
+
   if(images){
 
     for(const image of images){
@@ -113,6 +116,7 @@ console.log("image push")
       try{
 
         result = await putObject(file.buffer, fileName, mimeType, title);
+        console.log(result)
     
       }catch(err){
 
@@ -139,6 +143,8 @@ console.log("image push")
   const filePath = `${title}_hls/${uploadResults[0]?.fileName}`
 
   const isAdded = await addToDatabase(req, filePath, imageLocations);
+
+  console.log(isAdded);
 
   if(isAdded.status === "error"){
 
