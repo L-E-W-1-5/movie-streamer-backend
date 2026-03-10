@@ -75,6 +75,8 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 //upload hls
 movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
+  console.log("hls route")
+
   let { title } = req.body;
 
   const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
@@ -96,7 +98,7 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
       const imageRes = await putImage(image.originalname, title, image.buffer, image.mimetype)
 
       if(imageRes){
-console.log("image push")
+
         imageLocations.push(imageRes);
       };
 
@@ -104,7 +106,7 @@ console.log("image push")
   };
 
   if(hlsFiles){
-
+console.log("hls loop")
     for(const file of hlsFiles){
 
       const fileName = file.originalname// || file['relativePath'];
@@ -114,9 +116,9 @@ console.log("image push")
       let result;
 
       try{
-
+console.log("putobject route")
         result = await putObject(file.buffer, fileName, mimeType, title);
-        console.log(result)
+        res.send({"current": result});
     
       }catch(err){
 
