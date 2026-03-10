@@ -10,6 +10,7 @@ import { type Movie, type Images } from '../Types/Types.js';
 
 
 
+
 const movieRouter = express.Router();
 
 const storage = multer.memoryStorage();
@@ -71,7 +72,6 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 
 
-
 //upload hls
 movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
@@ -113,12 +113,22 @@ console.log("hls loop")
 
       const mimeType = mime.lookup(fileName) || 'application/octet-stream';
 
-      let result;
+      // let result;
 
       try{
 console.log("putobject route")
-        result = await putObject(file.buffer, fileName, mimeType, title);
-        res.send({"current": result});
+        const result = await putObject(file.buffer, fileName, mimeType, title);
+
+
+
+        if(fileName.endsWith('.m3u8')){
+
+          uploadResults.unshift({fileName, url: result?.url, key: result?.key})
+    
+        }else{
+
+          uploadResults.push({fileName, url: result?.url, key: result?.key});
+        }
     
       }catch(err){
 
@@ -131,14 +141,7 @@ console.log("putobject route")
       }
 
 
-      if(fileName.endsWith('.m3u8')){
-
-        uploadResults.unshift({fileName, url: result?.url, key: result?.key})
-    
-      }else{
-
-        uploadResults.push({fileName, url: result?.url, key: result?.key});
-      }
+      
     };
   }
 
