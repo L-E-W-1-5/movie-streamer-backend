@@ -93,7 +93,7 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
       const imageRes = await putImage(image.originalname, title, image.buffer, image.mimetype)
 
       if(imageRes){
-
+console.log("image push")
         imageLocations.push(imageRes);
       };
 
