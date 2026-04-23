@@ -7,13 +7,15 @@ import mime from 'mime-types'
 import { verifyToken } from '../middleware/auth.js';
 import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/getObjects.js';
 import { type Movie, type Images } from '../Types/Types.js';
-
+//import multerS3 from 'multer-s3';
 
 
 
 const movieRouter = express.Router();
 
 const storage = multer.memoryStorage();
+
+
 
 const upload = multer({
   storage: storage,
