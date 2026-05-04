@@ -1,6 +1,7 @@
 import pool from './db.js'
 import express, { type Express, type Request, type Response , type Application } from 'express';
 import { type Movie, type Images } from '../Types/Types.js';
+import { putImage } from '../util/putObject.js';
 
 type MovieData = {
     id: number,
@@ -152,6 +153,28 @@ export const increaseTimesPlayed = async (id: number) => {
             WHERE id = $1
         `, [id])
 
+}
+
+
+export const saveImagesToDatabase = async (images: Express.Multer.File[], title: string) => {
+
+    let imageLocations: Images[] = [];
+
+    if(images){
+    
+        for(const image of images){
+    
+          const imageRes = await putImage(image.originalname, title, image.buffer, image.mimetype)
+    
+          if(imageRes){
+    
+            imageLocations.push(imageRes);
+          };
+    
+        };
+    };
+
+    return imageLocations;
 }
 
 

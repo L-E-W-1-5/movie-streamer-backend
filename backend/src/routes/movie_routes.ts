@@ -1,5 +1,5 @@
 import express, { type Express, type Request, type Response , type Application, type NextFunction } from 'express';
-import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage } from '../database/movie_models.js'
+import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage, saveImagesToDatabase } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
@@ -28,6 +28,13 @@ declare global {
     interface Request {
 
       movieFolder?: string;
+
+      playlistKey?: string;
+
+      body: {
+        title: string,
+        [key: string]: any;
+      }
     }
   }
 }
@@ -42,19 +49,19 @@ declare global {
 
 
 
-const generateMovieKey = (req: Request, res: Response, next: NextFunction) => {
+// const generateMovieKey = (req: Request, res: Response, next: NextFunction) => {
 
-  const title = slugify(req.body.title || 'untitled', { lower: true, strict: true });
+//   const title = slugify(req.body.title || 'untitled', { lower: true, strict: true });
 
-  const date = new Date().toISOString().split('T')[0];
+//   const date = new Date().toISOString().split('T')[0];
 
-  const id = nanoid();
+//   const id = nanoid();
 
-  req.movieFolder = `${title}/${date}_${id}`;
+//   req.movieFolder = `${title}/${date}_${id}`;
 
-  next();
+//   next();
   
-};
+// };
 
 const uploadViaStream = multer({
 
@@ -68,7 +75,23 @@ const uploadViaStream = multer({
 
     key: function (req, file, cb) {
 
+      if(!req.movieFolder){
+
+        const title = slugify(req.body.title || 'untitled', { lower: true, strict: true });
+
+        const date = new Date().toISOString().split('T')[0];
+
+        const id = nanoid();
+
+        req.movieFolder = `${title}/${date}_${id}`;
+      }
+
       const key = `${req.movieFolder}/${file.originalname}`;
+
+      if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
+
+        req.playlistKey = key
+      }
 
       cb(null, key);
     }
@@ -77,7 +100,8 @@ const uploadViaStream = multer({
 
 
 const uploadStreamFields = uploadViaStream.fields([
-  { name: 'movie', maxCount: 1000 }
+  { name: 'movie', maxCount: 1000 },
+  { name: 'images[]', maxCount: 5 }
 ]);
 
 
@@ -140,17 +164,68 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 
 
-movieRouter.post('/stream', verifyToken, generateMovieKey, uploadStreamFields, async (req, res) => {
+movieRouter.post('/stream', verifyToken, uploadStreamFields, async (req, res) => {
 
   const filePath = req.movieFolder;
 
-  res.send(`successfully uploaded ${req.files ? Object.keys(req.files) : 'no files'}`)
+  const playlistKey = req.playlistKey;
+
+  const { title } = req.body;
+
+  const dbPath = `${filePath}/${playlistKey}`;
+
+  const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
+
+  const images = files['images[]']
+
+  let imageLocations: Images[] = [];
+
+  if(images && images.length > 0){
+
+    try{
+
+      imageLocations = await saveImagesToDatabase(images, title);
+    
+    }catch(err){
+
+      console.log(err);
+    }
+
+  };
+
+  let isAdded;
+
+  try{
+
+    isAdded = await addToDatabase(req, dbPath, imageLocations);
+  
+  }catch(err){
+
+    console.log(err);
+  }
+
+  console.log(isAdded);
+
+  if(!isAdded || isAdded.status === "error"){
+
+    return res.status(500).json({
+      payload: "added to s3 but failed to add to database",
+      status: "error"
+    })
+  }
+
+  return res.status(201).json({
+    payload: isAdded.data,
+    status: "success"
+  })
+
+  //res.send(`successfully uploaded ${req.files ? Object.keys(req.files) : 'no files'}`)
 });
 
 
 
 //upload hls
-movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
+movieRouter.post('/hls', verifyToken, uploadFieldsHLS, async (req, res) => {
 
   console.log("hls route")
 
@@ -160,13 +235,13 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
   const hlsFiles = files['hls_files[]']
 
-  const images = files['images']
+  const images = files['images[]']
 
   const uploadResults = [];
 
   let imageLocations = [];
 
-  console.log("here", hlsFiles);
+  console.log("246 - hls files", hlsFiles);
 
   if(images){
 
