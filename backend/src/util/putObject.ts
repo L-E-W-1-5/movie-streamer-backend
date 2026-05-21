@@ -53,8 +53,8 @@ export const putImage = async ( originalName: string, title: string, image: Buff
 
     console.log(image, title)
 
-    //const folderName = `images/${title}/${originalName}`
-    const folderName = `images/${originalName}`
+    const folderName = `images/${title}/${originalName}`
+    //const folderName = `images/${originalName}`
 
     try{
 

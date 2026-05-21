@@ -102,10 +102,10 @@ const uploadViaStream = multer({
     ) {
 
    
+      const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
 
       if(!req.movieFolder){
 
-        const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
 
 //TODO: change the title to a req.query.title because body isnt available here - /stream?title=my-movie
         const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
@@ -121,7 +121,7 @@ const uploadViaStream = multer({
 
       if(file.fieldname === 'images[]'){
 
-        key = `images/${file.originalname}`;
+        key = `images/${rawTitle}/${file.originalname}`;
 
         console.log("multer image key", key)
       
@@ -235,14 +235,25 @@ movieRouter.post('/stream', verifyToken, uploadStreamFields, async (req, res) =>
 
   if(images && images.length > 0){
 
-    try{
+    imageLocations = images.map(image => {
 
-      imageLocations = await saveImagesToDatabase(images, title);
+      return {
+        key: `images/${title}/${image.originalname}`,
+        url: `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${title}/${image.originalname}`,
+        mimeType: image.mimetype,
+        title,
+        originalName: image.originalname
+      }
+    })
+
+//     try{
+// //dont need
+//       imageLocations = await saveImagesToDatabase(images, title);
     
-    }catch(err){
+//     }catch(err){
 
-      console.log(err);
-    }
+//       console.log(err);
+//     }
 
   };
 
