@@ -25,7 +25,7 @@ export const deleteObject = async (fileName: string) => {
     
         const deleteList = segmentList.Contents.map(s => ({ Key: s.Key }))
     
-        console.log(deleteList)
+
 
         const deleteParams = {
 
@@ -38,7 +38,7 @@ export const deleteObject = async (fileName: string) => {
 
         const isDeleted = await s3Client.send(new DeleteObjectsCommand(deleteParams))
 
-        console.log(isDeleted);
+;
 
     }catch(err){
 

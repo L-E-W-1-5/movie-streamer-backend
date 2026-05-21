@@ -145,6 +145,7 @@ const uploadViaStream = multer({
 
   limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10 GB limit
   
+  
 });
 
 
@@ -481,7 +482,7 @@ movieRouter.post('/delete_movie', verifyToken, async (req: Request, res: Respons
   try{
 
     s3Return = await deleteObject(key);
-    console.log(s3Return)
+
   
   }catch(err){
 
@@ -500,6 +501,16 @@ movieRouter.post('/delete_movie', verifyToken, async (req: Request, res: Respons
     try{
 
       databaseReturn = await deleteMovie(id);
+
+      
+
+      for(const file of databaseReturn.image){
+
+        
+          deleteImageFromS3(file.key);
+        
+      }
+
 
     }catch(err){
 
