@@ -132,6 +132,8 @@ export const sendGridToUser = async (guid: UUIDTypes, email: string) => {
 //email sent to a newly verified user
 export const sendMailToUser = async (guid: UUID, email:string) => {
 
+    console.log("send to user function")
+
     const subject = "Login Details For LuluFlix";
 
     try{
@@ -143,6 +145,8 @@ export const sendMailToUser = async (guid: UUID, email:string) => {
                 pass: process.env.EMAIL_PASS
             }
         });
+
+console.log("send to user guid and email", guid, email)
 
         transporter.sendMail({
             from: process.env.EMAIL,
@@ -161,7 +165,7 @@ export const sendMailToUser = async (guid: UUID, email:string) => {
                 throw new Error(`error sending mail. ${error}`);
 
             }else {
-
+console.log(info)
                 return {
 
                     payload: info,
@@ -174,7 +178,7 @@ export const sendMailToUser = async (guid: UUID, email:string) => {
 
         console.log(err);
     }
-  
+  console.log("guid, email")
     return;
 }
 
