@@ -14,11 +14,31 @@ import path from 'path';
 import slugify from 'slugify';
 const nanoid = customAlphabet('1234567890abcdef', 8);
 
+import https from "https";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
+
 const movieRouter = express.Router();
 
 const storage = multer.memoryStorage();
 
-const client = new S3Client();
+//const client = new S3Client();
+
+const client = new S3Client({
+
+  region: process.env.REGION as string,
+
+  credentials: {
+        accessKeyId: process.env.ACCESS_KEY as string,
+        secretAccessKey: process.env.SECRET_KEY as string
+  },
+
+  requestHandler: new NodeHttpHandler({
+    httpsAgent: new https.Agent({
+      maxSockets: 200 // or 300 for HLS
+    }),
+    
+  })
+});
 
 
 declare global {
@@ -31,13 +51,15 @@ declare global {
 
       playlistKey?: string;
 
-      body: {
-        title: string,
-        [key: string]: any;
-      }
+      // body: {
+      //   title: string,
+      //   [key: string]: any;
+      // }
     }
   }
 }
+
+export {};
 
 
 
@@ -73,11 +95,20 @@ const uploadViaStream = multer({
 
     contentType: multers3.AUTO_CONTENT_TYPE,
 
-    key: function (req, file, cb) {
+    key: function (
+      req: Request,
+      file,
+      cb
+    ) {
+
+   
 
       if(!req.movieFolder){
 
-        const title = slugify(req.body.title || 'untitled', { lower: true, strict: true });
+        const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
+
+//TODO: change the title to a req.query.title because body isnt available here - /stream?title=my-movie
+        const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
 
         const date = new Date().toISOString().split('T')[0];
 
@@ -86,21 +117,39 @@ const uploadViaStream = multer({
         req.movieFolder = `${title}/${date}_${id}`;
       }
 
-      const key = `${req.movieFolder}/${file.originalname}`;
+      let key: string;
 
-      if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
+      if(file.fieldname === 'images[]'){
 
-        req.playlistKey = key
-      }
+        key = `images/${file.originalname}`;
+
+        console.log("multer image key", key)
+      
+      }else{
+
+        key = `${req.movieFolder}/${file.originalname}`;
+
+        console.log("multer", key);
+
+        if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
+
+          console.log(".m3u8", key)
+
+          req.playlistKey = key
+        }
+      } 
 
       cb(null, key);
     }
-  })
-})
+  }),
+
+  limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10 GB limit
+  
+});
 
 
 const uploadStreamFields = uploadViaStream.fields([
-  { name: 'movie', maxCount: 1000 },
+  { name: 'hls_files[]', maxCount: 1000 },
   { name: 'images[]', maxCount: 5 }
 ]);
 
@@ -166,11 +215,15 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 movieRouter.post('/stream', verifyToken, uploadStreamFields, async (req, res) => {
 
+  console.log("stream route")
+
   const filePath = req.movieFolder;
 
   const playlistKey = req.playlistKey;
 
   const { title } = req.body;
+
+  console.log("request", req.body, filePath, playlistKey)
 
   const dbPath = `${filePath}/${playlistKey}`;
 
