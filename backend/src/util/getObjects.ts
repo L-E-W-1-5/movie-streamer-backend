@@ -81,8 +81,6 @@ export const generateSignedPlaylist = async (originalPlaylist: string, path: str
 
                 const fullSegment = `${path}/${seg}`;
 
-                //console.log(fullSegment);
-
                 const params = {
                     Bucket: process.env.S3_BUCKET_NAME,
                     Key: `${fullSegment}`,

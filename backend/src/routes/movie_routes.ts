@@ -1,20 +1,157 @@
-import express, { type Express, type Request, type Response , type Application } from 'express';
-import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage } from '../database/movie_models.js'
+import express, { type Express, type Request, type Response , type Application, type NextFunction } from 'express';
+import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage, saveImagesToDatabase } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
+import multers3 from 'multer-s3';
 import mime from 'mime-types'
 import { verifyToken } from '../middleware/auth.js';
 import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/getObjects.js';
 import { type Movie, type Images } from '../Types/Types.js';
-//import multerS3 from 'multer-s3';
+import { S3Client } from "@aws-sdk/client-s3"
+import { customAlphabet } from 'nanoid';
+import path from 'path';
+import slugify from 'slugify';
+const nanoid = customAlphabet('1234567890abcdef', 8);
 
-
+import https from "https";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
 
 const movieRouter = express.Router();
 
 const storage = multer.memoryStorage();
 
+//const client = new S3Client();
+
+const client = new S3Client({
+
+  region: process.env.REGION as string,
+
+  credentials: {
+        accessKeyId: process.env.ACCESS_KEY as string,
+        secretAccessKey: process.env.SECRET_KEY as string
+  },
+
+  requestHandler: new NodeHttpHandler({
+    httpsAgent: new https.Agent({
+      maxSockets: 200 // or 300 for HLS
+    }),
+    
+  })
+});
+
+
+declare global {
+
+  namespace Express {
+
+    interface Request {
+
+      movieFolder?: string;
+
+      playlistKey?: string;
+
+      // body: {
+      //   title: string,
+      //   [key: string]: any;
+      // }
+    }
+  }
+}
+
+export {};
+
+
+
+//TODO: change the storage of multer to multers3 to upload directly to s3 instead of storing in memory first, this will save server resources and allow for larger file uploads. also add error handling for file size limits and unsupported file types. also consider adding a progress bar on the frontend for large uploads.
+
+//TODO: change the hls route to account for the change in storage. I no longer need to put the files into the s3 myself, multer will handle that. I just need to get the file paths from multer and add them to the database.
+
+//TODO: remember to change branch!
+
+
+
+// const generateMovieKey = (req: Request, res: Response, next: NextFunction) => {
+
+//   const title = slugify(req.body.title || 'untitled', { lower: true, strict: true });
+
+//   const date = new Date().toISOString().split('T')[0];
+
+//   const id = nanoid();
+
+//   req.movieFolder = `${title}/${date}_${id}`;
+
+//   next();
+  
+// };
+
+const uploadViaStream = multer({
+
+  storage: multers3({
+
+    s3: client,
+
+    bucket: process.env.S3_BUCKET_NAME!,
+
+    contentType: multers3.AUTO_CONTENT_TYPE,
+
+    key: function (
+      req: Request,
+      file,
+      cb
+    ) {
+
+   
+
+      if(!req.movieFolder){
+
+        const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
+
+//TODO: change the title to a req.query.title because body isnt available here - /stream?title=my-movie
+        const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
+
+        const date = new Date().toISOString().split('T')[0];
+
+        const id = nanoid();
+
+        req.movieFolder = `${title}/${date}_${id}`;
+      }
+
+      let key: string;
+
+      if(file.fieldname === 'images[]'){
+
+        key = `images/${file.originalname}`;
+
+        console.log("multer image key", key)
+      
+      }else{
+
+        key = `${req.movieFolder}/${file.originalname}`;
+
+        console.log("multer", key);
+
+        if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
+
+          console.log(".m3u8", key)
+
+          req.playlistKey = key
+        }
+      } 
+
+      cb(null, key);
+    }
+  }),
+
+  limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10 GB limit
+  
+});
+
+
+const uploadStreamFields = uploadViaStream.fields([
+  { name: 'hls_files[]', maxCount: 1000 },
+  { name: 'images[]', maxCount: 5 }
+]);
 
 
 const upload = multer({
@@ -22,20 +159,22 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 * 1024 } // 10 GB limit
 });
 
+
 const uploadFieldsSingle = upload.fields([
   { name: 'movie', maxCount: 1},
   { name: 'images[]', maxCount: 5 },           
 ])
+
 
 const uploadFieldsHLS = upload.fields([
   { name: 'hls_files[]', maxCount: 1500 },    
   { name: 'images[]', maxCount: 5 }      
 ])
 
+
 const uploadImage = upload.fields([
   { name: 'image[]', maxCount: 50 }
 ])
-
 
 
 
@@ -74,8 +213,72 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 
 
+movieRouter.post('/stream', verifyToken, uploadStreamFields, async (req, res) => {
+
+  console.log("stream route")
+
+  const filePath = req.movieFolder;
+
+  const playlistKey = req.playlistKey;
+
+  const { title } = req.body;
+
+  console.log("request", req.body, filePath, playlistKey)
+
+  const dbPath = `${filePath}/${playlistKey}`;
+
+  const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
+
+  const images = files['images[]']
+
+  let imageLocations: Images[] = [];
+
+  if(images && images.length > 0){
+
+    try{
+
+      imageLocations = await saveImagesToDatabase(images, title);
+    
+    }catch(err){
+
+      console.log(err);
+    }
+
+  };
+
+  let isAdded;
+
+  try{
+
+    isAdded = await addToDatabase(req, dbPath, imageLocations);
+  
+  }catch(err){
+
+    console.log(err);
+  }
+
+  console.log(isAdded);
+
+  if(!isAdded || isAdded.status === "error"){
+
+    return res.status(500).json({
+      payload: "added to s3 but failed to add to database",
+      status: "error"
+    })
+  }
+
+  return res.status(201).json({
+    payload: isAdded.data,
+    status: "success"
+  })
+
+  //res.send(`successfully uploaded ${req.files ? Object.keys(req.files) : 'no files'}`)
+});
+
+
+
 //upload hls
-movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
+movieRouter.post('/hls', verifyToken, uploadFieldsHLS, async (req, res) => {
 
   console.log("hls route")
 
@@ -85,13 +288,13 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
   const hlsFiles = files['hls_files[]']
 
-  const images = files['images']
+  const images = files['images[]']
 
   const uploadResults = [];
 
   let imageLocations = [];
 
-  console.log("here", hlsFiles);
+  console.log("246 - hls files", hlsFiles);
 
   if(images){
 
@@ -108,17 +311,15 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
   };
 
   if(hlsFiles){
-console.log("hls loop")
+
     for(const file of hlsFiles){
 
       const fileName = file.originalname// || file['relativePath'];
 
       const mimeType = mime.lookup(fileName) || 'application/octet-stream';
 
-      // let result;
-
       try{
-console.log("putobject route")
+
         const result = await putObject(file.buffer, fileName, mimeType, title);
 
 
@@ -171,7 +372,7 @@ console.log("putobject route")
 
 
 // upload new movie
-movieRouter.post('/', uploadFieldsSingle, verifyToken, async (req: Request,  res: Response) => {
+movieRouter.post('/', verifyToken, uploadFieldsSingle, async (req: Request,  res: Response) => {
 
   let { title } = req.body;  
 
@@ -260,7 +461,7 @@ movieRouter.post('/', uploadFieldsSingle, verifyToken, async (req: Request,  res
 
 
 // delete a movie
-movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
+movieRouter.post('/delete_movie', verifyToken, async (req: Request, res: Response) => {
 
   const { title, id, key } = req.body.movie;
 
@@ -383,7 +584,7 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
 
 //update movie details and/or images
-movieRouter.post('/update_movie', uploadImage, verifyToken, async (req, res) => {
+movieRouter.post('/update_movie', verifyToken, uploadImage, async (req, res) => {
 
   let { title, description, genre, year, id, length } = req.body;
 
@@ -498,7 +699,7 @@ movieRouter.post('/image_delete', verifyToken, async (req, res) => {
 });
 
 
-movieRouter.post('/update_image', uploadImage, verifyToken, async (req, res) => {
+movieRouter.post('/update_image', verifyToken, uploadImage, async (req, res) => {
 
   
   const { imagesUp } = req.body

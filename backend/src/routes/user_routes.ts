@@ -105,6 +105,8 @@ userRouter.post('/newuser', async (req: Request, res: Response) => {
 // this is the endpoint for the link in the email sent to admin for user verification 
 userRouter.get('/verify_user', async (req:Request, res:Response) => {
 
+    console.log("verify route hit")
+
     const tokenParam = req.query.token;
 
     const token = typeof tokenParam === 'string' ? tokenParam : undefined
