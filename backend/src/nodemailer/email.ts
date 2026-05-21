@@ -130,7 +130,7 @@ export const sendGridToUser = async (guid: UUIDTypes, email: string) => {
  */
 
 //email sent to a newly verified user
-export const sendMailToUser = async (guid: UUID, email:string) => {
+export const sendMailToUser2 = async (guid: UUID, email:string) => {
 
     console.log("send to user function")
 
@@ -156,7 +156,7 @@ console.log("send to user guid and email", guid, email)
                    <p><b>${guid}</b></p>
                    <p>We understand you have a choice of streaming services and are happy you chose us.</p>
                    <p>Many thanks from the LuluFlix team :)</p>`
-        }, function(error, info){
+        }, (error, info) => {
 
             if(error){
 
@@ -233,3 +233,53 @@ export const sendMailToAdmin = async (name: string, email: string, id: number) =
 
 }
 
+export const sendMailToUser = async (guid: UUID, email:string) => {
+console.log("send to user function")
+
+    const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL,
+                pass: process.env.EMAIL_PASS
+            },
+    });
+    
+    try{
+
+        transporter.sendMail({
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Login Details For LuluFlix",
+            html: `<p>You have been accepted to join LuluFlix, all you need to do is login with this code each time..</p>
+                   <p><b>${guid}</b></p>
+                   <p>We understand you have a choice of streaming services and are happy you chose us.</p>
+                   <p>Many thanks from the LuluFlix team :)</p>`
+
+        }, (error, info) => {
+console.log("send to user guid and email", guid, email)
+            if(error){
+
+                console.log(error);
+
+                throw new Error(`mail not sent`)
+            
+            }else{
+console.log(info)
+                return {
+
+                    payload: info,
+                    status: "success"
+                }
+            }
+        });
+
+    }catch(err){
+
+        console.log(err);
+
+        throw new Error(`mail not sent`)
+    };
+
+    return;
+
+}
