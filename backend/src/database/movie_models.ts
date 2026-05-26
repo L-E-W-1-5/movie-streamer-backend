@@ -37,20 +37,12 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
             RETURNING *;
         `, [title, key, genre, description, year, length])
     
-    .catch((e) => {
 
-        console.log("model addMovie 20", e)
-
-        throw new Error("movie not added to the database");
-    })
-
-// do i need this?
     if(!createMovieEntry?.rows[0]){
 
         throw new Error("movie not added to the database");
     };
 
-    console.log("28 addMovie", createMovieEntry.rows);
 
     return createMovieEntry.rows[0];
 };
@@ -222,7 +214,7 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
 
         try{
 
-          const imageRes = await addImage(movieDatabaseRecord.id, image.key, image.url, image.mimeType, image.title, image.originalName);
+          const imageRes = await addImage(movieDatabaseRecord.id, image)   //.key, image.url, image.mimeType, image.title, image.originalName);
 
           imageDatabaseRecord.push(imageRes);
 
@@ -254,26 +246,25 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
 }
 
 
+//key: string, url: string, mimeType: string, title: string, originalName: string, usage: string | null = null) => {
+export const addImage = async (movieId: number, image: Images, usage: string | null = null) => {   
 
-export const addImage = async (movieId: number, key: string, url: string, mimeType: string, title: string, originalName: string, usage: string | null = null) => {
-
-    console.log(url)
+  
 
 
-    const createImageEntry = await pool.query(`
+    const result = await pool.query(`
             INSERT INTO images (movie_id, key, url, mime_type, title, original_name, usage)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
-        `, [movieId, key, url, mimeType, title, originalName, usage])
+        `, [movieId, image.key, image.url, image.mimeType, image.title, image.originalName, usage])
     
-    .catch((err) => {
 
-        console.log(err);
+    if (!result.rows[0]) {
 
-        throw new Error("Image not added to database")
-    })
+        throw new Error("Failed to create image");
+    }
 
-    return createImageEntry.rows[0]
+    return result.rows[0];
 };
 
 

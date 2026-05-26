@@ -66,11 +66,19 @@ app.use('/messages', verifyToken, messageRouter)
 
 
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
 
   console.log(`Server is Fire at https://localhost:${port}`);
 
 });
+
+server.timeout = 1000 * 60 * 30;
+
+server.requestTimeout = 1000 * 60 * 30;
+
+server.headersTimeout = 1000 * 60 * 31;
+
+server.keepAliveTimeout = 1000 * 60 * 30;
 
 
 
