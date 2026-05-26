@@ -104,24 +104,24 @@ const uploadViaStream = multer({
    
       const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
 
+      const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
+      
       if(!req.movieFolder){
 
-
 //TODO: change the title to a req.query.title because body isnt available here - /stream?title=my-movie
-        const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
 
-        const date = new Date().toISOString().split('T')[0];
+       // const date = new Date().toISOString().split('T')[0];
 
-        const id = nanoid();
+       // const id = nanoid();
 
-        req.movieFolder = `${title}/${date}_${id}`;
+        req.movieFolder = `${title}`;
       }
 
       let key: string;
 
       if(file.fieldname === 'images[]'){
 
-        key = `images/${rawTitle}/${file.originalname}`;
+        key = `images/${title}/${file.originalname}`;
 
         console.log("multer image key", key)
       
@@ -226,7 +226,7 @@ movieRouter.post('/stream', verifyToken, uploadStreamFields, async (req, res) =>
 
   console.log("request", req.body, filePath, playlistKey)
 
-  const dbPath = `${filePath}/${playlistKey}`;
+  const dbPath = `${playlistKey}`;
 
   const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
 
