@@ -1,5 +1,6 @@
 import * as movieModel from '../database/movie_models.js';
-import { type Movie, type Images } from '../Types/Types.js';
+import { type Movie, type Images, type S3File } from '../Types/Types.js';
+
 
 
 type MovieData = {
@@ -9,8 +10,10 @@ type MovieData = {
     year: number,
     length: string,
     dbPath: string,
-    images: Express.Multer.File[]         
+    images: S3File[]         
 }
+
+
 
 
 export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images }: MovieData) => {
@@ -18,11 +21,11 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
     const formattedTitle = title.replaceAll(" ", "-");
 console.log("formattedTitle", formattedTitle);
 
-    const imageLocations: Images[] = images.map((image: { originalname: string; mimetype: string }) => {
+    const imageLocations: Images[] = images.map((image: S3File) => {
 
       return {
         key: `images/${formattedTitle}/${image.originalname}`,
-        url: `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
+        url: image.location,//`https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
         mimeType: image.mimetype,
         title,
         originalName: image.originalname

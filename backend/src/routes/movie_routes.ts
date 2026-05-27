@@ -7,13 +7,14 @@ import multers3 from 'multer-s3';
 import mime from 'mime-types'
 import { verifyToken } from '../middleware/auth.js';
 import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/getObjects.js';
-import { type Movie, type Images } from '../Types/Types.js';
+import { type Movie, type Images, type S3File } from '../Types/Types.js';
 import { S3Client } from "@aws-sdk/client-s3"
 import { customAlphabet } from 'nanoid';
 import path from 'path';
 import slugify from 'slugify';
 const nanoid = customAlphabet('1234567890abcdef', 8);
 import { createMovieStream } from '../services/movie_service.js';
+
 
 import https from "https";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
@@ -61,6 +62,8 @@ declare global {
 }
 
 export {};
+
+
 
 
 
@@ -235,7 +238,7 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
 
     const { title, genre, description, year, length } = req.body;
 
-    const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
+    const files = req.files as { [ fieldName: string ] : S3File[] };
 
     console.log("stream route", files['images[]'], playlistKey);
 

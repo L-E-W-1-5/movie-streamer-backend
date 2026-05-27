@@ -49,29 +49,6 @@ export const deleteObject = async (fileName: string) => {
     }
 
     
-
-    /*
-    const command = new DeleteObjectCommand(params);
-
-    try{
-
-        const data = await s3Client.send(command);
-
-        console.log(data)
-
-    }catch(err){
-
-        console.error(`failed to delete ${fileName}, err`);
-
-        throw new Error("object could not be deleted");
-    }
-
-
-
-    console.log(`deleted ${fileName} from bucket`)
-
-    return "deleted"
-    */
 }
 
 
@@ -86,7 +63,12 @@ export const deleteImageFromS3 = async (filePath: string) => {
 
     const command = new DeleteObjectCommand(params)
 
-    const data = await s3Client.send(command)
+    const data = await s3Client.send(command);
+
+    if (data.$metadata.httpStatusCode !== 204) {
+
+      throw new Error("delete failed");
+    };
 
     console.log(data)
   

@@ -17,3 +17,9 @@ export type Images = {
   title: string,
   originalName: string
 }
+
+export type S3File = Express.Multer.File & {
+  location: string;
+  key: string;
+  bucket: string;
+};
