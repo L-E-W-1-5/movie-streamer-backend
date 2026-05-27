@@ -5,20 +5,21 @@ import { ListObjectsV2Command, DeleteObjectsCommand, DeleteObjectCommand } from 
 
 export const deleteObject = async (fileName: string) => {
 
-    const folderName = fileName.substring(0, fileName.indexOf('/'));
+    //const folderName = fileName.substring(0, fileName.indexOf('/')) + '/';
+
+    const folderName = fileName.substring(0, fileName.lastIndexOf('/')) + '/';
 
     try{
 
         const params = {
                 Bucket: process.env.S3_BUCKET_NAME,
-                Key: fileName,
                 Prefix: folderName
         };
 
         const segmentList = await s3Client.send(new ListObjectsV2Command(params))
 
     
-        if(!segmentList.Contents){
+        if(!segmentList.Contents?.length){
         
             throw new Error("no objects to delete")
         }
@@ -36,9 +37,9 @@ export const deleteObject = async (fileName: string) => {
             }
         };
 
-        const isDeleted = await s3Client.send(new DeleteObjectsCommand(deleteParams))
-
-;
+        await s3Client.send(new DeleteObjectsCommand(deleteParams))
+        
+        return "deleted";
 
     }catch(err){
 
@@ -47,7 +48,7 @@ export const deleteObject = async (fileName: string) => {
         throw new Error("failed to delete folder")
     }
 
-    return "deleted"
+    
 
     /*
     const command = new DeleteObjectCommand(params);

@@ -215,7 +215,7 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
 
   try{
 
-    console.log(`Received batch ${req.body.batchNumber}`);
+    console.log(`Received batch ${parseInt(req.body.batchNumber) + 1}`);
 
     const isFirstBatch = req.body.isFirstBatch === "true";
 

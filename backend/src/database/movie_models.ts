@@ -99,13 +99,15 @@ export const deleteMovie = async (id: string) => {
         throw new Error("movie not deleted from database");
     }
 
+    console.log("movie deleted from database", movie.rows[0]);
+
     const imageRemoved = await pool.query(`
             DELETE FROM images
             WHERE movie_id = $1
             RETURNING *
         `, [id])
 
-    
+    console.log("images deleted from database", imageRemoved.rows);
     const isDeleted = {
         image: imageRemoved.rows ? imageRemoved.rows : [],
         movie: movie.rows[0] ? movie.rows[0] : []
