@@ -1,51 +1,68 @@
-// import * as movieModel from '../database/movie_models.js';
-// import { type Movie, type Images } from '../Types/Types.js';
+import * as movieModel from '../database/movie_models.js';
+import { type Movie, type Images } from '../Types/Types.js';
 
 
-// export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images }: any) => {
+type MovieData = {
+    title: string,
+    genre: string,
+    description: string,
+    year: number,
+    length: string,
+    dbPath: string,
+    images: Express.Multer.File[]         
+}
 
-//     const formattedTitle = title.split(" ").join("-");
 
+export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images }: MovieData) => {
 
-//     const imageLocations: Images[] = images.map((image: { originalname: string; mimetype: string }) => {
+    const formattedTitle = title.replaceAll(" ", "-");
+console.log("formattedTitle", formattedTitle);
 
-//       return {
-//         key: `images/${formattedTitle}/${image.originalname}`,
-//         url: `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
-//         mimeType: image.mimetype,
-//         title,
-//         originalName: image.originalname
-//       };
-//     });
+    const imageLocations: Images[] = images.map((image: { originalname: string; mimetype: string }) => {
 
-//     const movie = await movieModel.addMovie(
-//         title,
-//         dbPath,
-//         genre,
-//         description,
-//         year,
-//         length
-//     );
+      return {
+        key: `images/${formattedTitle}/${image.originalname}`,
+        url: `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
+        mimeType: image.mimetype,
+        title,
+        originalName: image.originalname
+      };
+    });
 
-//     if (!movie) {
+    console.log("imageLocations", imageLocations);
 
-//       throw new Error("Movie was not created");
-//     };
+    const movie = await movieModel.addMovie(
+        title,
+        dbPath,
+        genre,
+        description,
+        year,
+        length
+    );
 
-//     if(imageLocations.length > 0){
+    console.log("createStream 43", movie);
 
-//         const savedImages = await Promise.all(
+    if (!movie) {
 
-//             imageLocations.map(img => 
+      throw new Error("Movie was not created");
+    };
 
-//                 movieModel.addImage(movie.id, img)
-//             )
-//         );
+    if(imageLocations.length > 0){
 
-//         movie.images = savedImages;
-//     };
+        const savedImages = await Promise.all(
 
-//     return movie;
+            imageLocations.map(img => 
+
+                movieModel.addImage(movie.id, img)
+            )
+        );
+
+        movie.images = savedImages;
+    };
+
+    console.log("createStream 63", movie);
+
+    return movie;
     
 
-// };
+};

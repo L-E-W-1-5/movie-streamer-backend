@@ -13,6 +13,7 @@ import { customAlphabet } from 'nanoid';
 import path from 'path';
 import slugify from 'slugify';
 const nanoid = customAlphabet('1234567890abcdef', 8);
+import { createMovieStream } from '../services/movie_service.js';
 
 import https from "https";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
@@ -108,13 +109,7 @@ const uploadViaStream = multer({
       
       if(!req.movieFolder){
 
-//TODO: change the title to a req.query.title because body isnt available here - /stream?title=my-movie
-
-       // const date = new Date().toISOString().split('T')[0];
-
-       // const id = nanoid();
-
-        req.movieFolder = `${title}`;
+        req.movieFolder = `movies/${title}`;
       }
 
       let key: string;
@@ -123,13 +118,13 @@ const uploadViaStream = multer({
 
         key = `images/${title}/${file.originalname}`;
 
-        console.log("multer image key", key)
+     //   console.log("multer image key", key)
       
       }else{
 
         key = `${req.movieFolder}/${file.originalname}`;
 
-        console.log("multer", key);
+      //  console.log("multer", key);
 
         if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
 
@@ -143,8 +138,10 @@ const uploadViaStream = multer({
     }
   }),
 
-  limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10 GB limit
-  
+  limits: { 
+    fileSize: 10 * 1024 * 1024 * 1024,  // 10 GB limit
+    files: 1000
+   }, 
   
 });
 
@@ -214,83 +211,67 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 
 
-movieRouter.post('/stream', verifyToken, uploadStreamFields, async (req, res) => {
-
-  console.log("stream route")
-
-  const filePath = req.movieFolder;
-
-  const playlistKey = req.playlistKey;
-
-  const { title } = req.body;
-
-  console.log("request", req.body, filePath, playlistKey)
-
-  const dbPath = `${playlistKey}`;
-
-  const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
-
-  const images = files['images[]']
-
-  let imageLocations: Images[] = [];
-
-  if(images && images.length > 0){
-
-    imageLocations = images.map(image => {
-
-      return {
-        key: `images/${title}/${image.originalname}`,
-        url: `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${title}/${image.originalname}`,
-        mimeType: image.mimetype,
-        title,
-        originalName: image.originalname
-      }
-    })
-
-//     try{
-// //dont need
-//       imageLocations = await saveImagesToDatabase(images, title);
-    
-//     }catch(err){
-
-//       console.log(err);
-//     }
-
-  };
-
-  let isAdded;
+movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
 
   try{
 
-    isAdded = await addToDatabase(req, dbPath, imageLocations);
-  
+    console.log(`Received batch ${req.body.batchNumber}`);
+
+    const isFirstBatch = req.body.isFirstBatch === "true";
+
+    if(!isFirstBatch) return res.status(200).json({
+
+      status: "success"
+    });
+
+    const { playlistKey } = req;
+
+    if(isFirstBatch && !playlistKey) return res.status(400).json({
+
+      payload: "playlist file not found in the first batch",
+      status: "error"
+    });
+
+
+    const { title, genre, description, year, length } = req.body;
+
+    const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
+
+    console.log("stream route", files['images[]'], playlistKey);
+
+    const movie = await createMovieStream({
+      title,
+      genre,
+      description,
+      year: year ? parseInt(year) : 1,
+      length,
+      dbPath: playlistKey!,
+      images: files['images[]'] || []
+    });
+
+    console.log("movie created", movie);
+
+    res.status(201).json({
+      payload: movie,
+      status: "success"
+    })
+
   }catch(err){
 
-    console.log(err);
-  }
+    console.error(err);
 
-  console.log(isAdded);
-
-  if(!isAdded || isAdded.status === "error"){
-
-    return res.status(500).json({
-      payload: "added to s3 but failed to add to database",
+    res.status(500).json({
+      payload: "failed to upload movie stream",
       status: "error"
     })
   }
 
-  return res.status(201).json({
-    payload: isAdded.data,
-    status: "success"
-  })
-
-  //res.send(`successfully uploaded ${req.files ? Object.keys(req.files) : 'no files'}`)
 });
 
 
 
 //upload hls
-movieRouter.post('/hls', verifyToken, uploadFieldsHLS, async (req, res) => {
+movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
   console.log("hls route")
 
@@ -384,7 +365,7 @@ movieRouter.post('/hls', verifyToken, uploadFieldsHLS, async (req, res) => {
 
 
 // upload new movie
-movieRouter.post('/', verifyToken, uploadFieldsSingle, async (req: Request,  res: Response) => {
+movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) => {
 
   let { title } = req.body;  
 
@@ -473,7 +454,7 @@ movieRouter.post('/', verifyToken, uploadFieldsSingle, async (req: Request,  res
 
 
 // delete a movie
-movieRouter.post('/delete_movie', verifyToken, async (req: Request, res: Response) => {
+movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
   const { title, id, key } = req.body.movie;
 
@@ -545,7 +526,7 @@ movieRouter.post('/delete_movie', verifyToken, async (req: Request, res: Respons
 
 
 // fetch movie from s3
-movieRouter.post('/get_s3', verifyToken, async (req, res) => {
+movieRouter.post('/get_s3', async (req, res) => {
 
   
   const { key, id } = req.body.film;
@@ -606,7 +587,7 @@ movieRouter.post('/get_s3', verifyToken, async (req, res) => {
 
 
 //update movie details and/or images
-movieRouter.post('/update_movie', verifyToken, uploadImage, async (req, res) => {
+movieRouter.post('/update_movie', uploadImage, async (req, res) => {
 
   let { title, description, genre, year, id, length } = req.body;
 
@@ -632,7 +613,7 @@ movieRouter.post('/update_movie', verifyToken, uploadImage, async (req, res) => 
 
       if(reply){
 
-        const dbRecord = await addImage(id, reply.key, reply.url, reply.mimeType, title, image.originalname, usage)
+        const dbRecord = await addImage(id, reply, usage)
 
         imageDBResponses.push(dbRecord)
       }
@@ -672,7 +653,7 @@ movieRouter.post('/update_movie', verifyToken, uploadImage, async (req, res) => 
 
 
 // delete an image from a movie
-movieRouter.post('/image_delete', verifyToken, async (req, res) => {
+movieRouter.post('/image_delete', async (req, res) => {
 
   const image = req.body.image
 
@@ -721,7 +702,7 @@ movieRouter.post('/image_delete', verifyToken, async (req, res) => {
 });
 
 
-movieRouter.post('/update_image', verifyToken, uploadImage, async (req, res) => {
+movieRouter.post('/update_image', uploadImage, async (req, res) => {
 
   
   const { imagesUp } = req.body
