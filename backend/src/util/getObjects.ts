@@ -88,7 +88,7 @@ export const generateSignedPlaylist = async (originalPlaylist: string, path: str
 
                 const command = new GetObjectCommand(params);
 
-                const signedSeg = await getSignedUrl(s3Client, command)
+                const signedSeg = await getSignedUrl(s3Client, command, { expiresIn: 14400})
 
                 return signedSeg;
 
