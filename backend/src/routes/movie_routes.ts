@@ -109,7 +109,7 @@ const uploadViaStream = multer({
       
       if(!req.movieFolder){
 
-        req.movieFolder = `${title}`;
+        req.movieFolder = `movies/${title}`;
       }
 
       let key: string;
@@ -128,7 +128,7 @@ const uploadViaStream = multer({
 
         if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
 
-       //   console.log(".m3u8", key)
+          console.log(".m3u8", key)
 
           req.playlistKey = key
         }
@@ -215,21 +215,41 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
 
   try{
 
+    console.log(`Received batch ${req.body.batchNumber}`);
+
+    const isFirstBatch = req.body.isFirstBatch === "true";
+
+    if(!isFirstBatch) return res.status(200).json({
+
+      status: "success"
+    });
+
     const { playlistKey } = req;
 
-    const {title, genre, description, year, length} = req.body;
+    if(isFirstBatch && !playlistKey) return res.status(400).json({
+
+      payload: "playlist file not found in the first batch",
+      status: "error"
+    });
+
+
+    const { title, genre, description, year, length } = req.body;
 
     const files = req.files as { [ fieldName: string ] : Express.Multer.File[] };
+
+    console.log("stream route", files['images[]'], playlistKey);
 
     const movie = await createMovieStream({
       title,
       genre,
       description,
-      year: year ? parseInt(year) : null,
+      year: year ? parseInt(year) : 1,
       length,
-      dbPath: playlistKey,
+      dbPath: playlistKey!,
       images: files['images[]'] || []
     });
+
+    console.log("movie created", movie);
 
     res.status(201).json({
       payload: movie,

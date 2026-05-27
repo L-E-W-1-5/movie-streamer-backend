@@ -28,7 +28,7 @@ type ImageData = {
 
 export const addMovie = async (title: string, key: string, genre: string = "", description: string = "", year: number = 1, length: string = "") => {
 
-    console.log(typeof year, year);
+   
     
 //change this so that if the movie is in a folder, the key will be the file path and the title will remailn the same
     const createMovieEntry = await pool.query(`
@@ -42,7 +42,7 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 
         throw new Error("movie not added to the database");
     };
-
+    console.log("createMovieEntry", createMovieEntry.rows[0]);
 
     return createMovieEntry.rows[0];
 };

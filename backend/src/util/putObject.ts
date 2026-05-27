@@ -74,7 +74,7 @@ export const putImage = async ( originalName: string, title: string, image: Buff
             return;
         }
 
-        const keySpaceChange = params.Key.replaceAll(" ", "+")
+        const keySpaceChange = params.Key.replaceAll(" ", "-") //TODO: test this works: changed from '+' to '-' because thats what multer-s3 saves as the key.
 
         console.log(params.Key, keySpaceChange)
 

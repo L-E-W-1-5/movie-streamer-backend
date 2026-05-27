@@ -2,10 +2,21 @@ import * as movieModel from '../database/movie_models.js';
 import { type Movie, type Images } from '../Types/Types.js';
 
 
-export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images }: any) => {
+type MovieData = {
+    title: string,
+    genre: string,
+    description: string,
+    year: number,
+    length: string,
+    dbPath: string,
+    images: Express.Multer.File[]         
+}
 
-    const formattedTitle = title.split(" ").join("-");
 
+export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images }: MovieData) => {
+
+    const formattedTitle = title.replaceAll(" ", "-");
+console.log("formattedTitle", formattedTitle);
 
     const imageLocations: Images[] = images.map((image: { originalname: string; mimetype: string }) => {
 
@@ -18,6 +29,8 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
       };
     });
 
+    console.log("imageLocations", imageLocations);
+
     const movie = await movieModel.addMovie(
         title,
         dbPath,
@@ -26,6 +39,8 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
         year,
         length
     );
+
+    console.log("createStream 43", movie);
 
     if (!movie) {
 
@@ -44,6 +59,8 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
 
         movie.images = savedImages;
     };
+
+    console.log("createStream 63", movie);
 
     return movie;
     
