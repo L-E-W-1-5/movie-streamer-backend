@@ -1,21 +1,15 @@
-import express, { type Express, type Request, type Response , type Application, type NextFunction } from 'express';
-import { deleteImage, addMovie, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage, saveImagesToDatabase } from '../database/movie_models.js'
+import express, { type Request, type Response } from 'express';
+import { deleteImage, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
 import multers3 from 'multer-s3';
 import mime from 'mime-types'
-import { verifyToken } from '../middleware/auth.js';
 import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/getObjects.js';
-import { type Movie, type Images, type S3File } from '../Types/Types.js';
+import { type Images, type S3File } from '../Types/Types.js';
 import { S3Client } from "@aws-sdk/client-s3"
-import { customAlphabet } from 'nanoid';
-import path from 'path';
 import slugify from 'slugify';
-const nanoid = customAlphabet('1234567890abcdef', 8);
 import { createMovieStream } from '../services/movie_service.js';
-
-
 import https from "https";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
@@ -23,7 +17,6 @@ const movieRouter = express.Router();
 
 const storage = multer.memoryStorage();
 
-//const client = new S3Client();
 
 const client = new S3Client({
 
@@ -52,11 +45,6 @@ declare global {
       movieFolder?: string;
 
       playlistKey?: string;
-
-      // body: {
-      //   title: string,
-      //   [key: string]: any;
-      // }
     }
   }
 }
@@ -64,30 +52,6 @@ declare global {
 export {};
 
 
-
-
-
-//TODO: change the storage of multer to multers3 to upload directly to s3 instead of storing in memory first, this will save server resources and allow for larger file uploads. also add error handling for file size limits and unsupported file types. also consider adding a progress bar on the frontend for large uploads.
-
-//TODO: change the hls route to account for the change in storage. I no longer need to put the files into the s3 myself, multer will handle that. I just need to get the file paths from multer and add them to the database.
-
-//TODO: remember to change branch!
-
-
-
-// const generateMovieKey = (req: Request, res: Response, next: NextFunction) => {
-
-//   const title = slugify(req.body.title || 'untitled', { lower: true, strict: true });
-
-//   const date = new Date().toISOString().split('T')[0];
-
-//   const id = nanoid();
-
-//   req.movieFolder = `${title}/${date}_${id}`;
-
-//   next();
-  
-// };
 
 const uploadViaStream = multer({
 
@@ -105,7 +69,6 @@ const uploadViaStream = multer({
       cb
     ) {
 
-   
       const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
 
       const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
@@ -120,18 +83,12 @@ const uploadViaStream = multer({
       if(file.fieldname === 'images[]'){
 
         key = `images/${title}/${file.originalname}`;
-
-     //   console.log("multer image key", key)
       
       }else{
 
         key = `${req.movieFolder}/${file.originalname}`;
 
-      //  console.log("multer", key);
-
         if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
-
-          console.log(".m3u8", key)
 
           req.playlistKey = key
         }
@@ -239,8 +196,6 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
     const { title, genre, description, year, length } = req.body;
 
     const files = req.files as { [ fieldName: string ] : S3File[] };
-
-    console.log("stream route", files['images[]'], playlistKey);
 
     const movie = await createMovieStream({
       title,
@@ -467,36 +422,37 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
     s3Return = await deleteObject(key);
 
-  
-  }catch(err){
+    let databaseReturn
 
-    console.log(err);
-
-    return res.status(500).json({
-      payload: err,
-      status: "error"
-    })
-  }
-
-  let databaseReturn
-
-  if(s3Return === "deleted"){
-
-    try{
+    if(s3Return === "deleted"){
 
       databaseReturn = await deleteMovie(id);
 
-      
+      await Promise.all(
 
-      for(const file of databaseReturn.image){
+        databaseReturn.image.map(file =>
 
-        
-          deleteImageFromS3(file.key);
-        
-      }
+          deleteImageFromS3(file.key)
+        )
+      );
 
+      if(databaseReturn){
 
-    }catch(err){
+        return res.status(200).json({
+          payload: "movie deleted successfully from all storage",
+          status: "success"
+        })
+
+      }else{
+
+        return res.status(400).json({
+          payload: "movie not deleted from database",
+          status: "error"
+        })
+      };
+    }
+
+  }catch(err){
 
       console.log(err);
 
@@ -504,26 +460,8 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
         payload: err,
         status: "error"
       });
-    };
-
-    if(databaseReturn){
-
-      return res.status(200).json({
-        payload: "movie deleted successfully from all storage",
-        status: "success"
-      })
-    }else{
-
-      return res.status(400).json({
-        payload: "movie not deleted from database",
-        status: "error"
-      })
-    }
-  }
-
-  return
-
-})
+  };
+});
 
 
 

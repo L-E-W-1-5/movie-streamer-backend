@@ -24,8 +24,8 @@ console.log("formattedTitle", formattedTitle);
     const imageLocations: Images[] = images.map((image: S3File) => {
 
       return {
-        key: `images/${formattedTitle}/${image.originalname}`,
-        url: image.location,//`https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
+        key: image.key, //`images/${formattedTitle}/${image.originalname}`,
+        url: image.location, //`https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
         mimeType: image.mimetype,
         title,
         originalName: image.originalname

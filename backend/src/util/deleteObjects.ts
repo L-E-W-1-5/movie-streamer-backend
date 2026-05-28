@@ -53,7 +53,7 @@ export const deleteObject = async (fileName: string) => {
 
 
 export const deleteImageFromS3 = async (filePath: string) => {
-
+console.log("deleteImageFromS3", filePath)
   try{
 
     const params = {
@@ -70,21 +70,15 @@ export const deleteImageFromS3 = async (filePath: string) => {
       throw new Error("delete failed");
     };
 
-    console.log(data)
+    console.log("deleteImageFromS3", data)
+
+    return { status: "success" }
   
   }catch(err){
 
     console.log(err)
 
-    return {
-      payload: "failed to delete image",
-      status: "error"
-    }
-  }
-
-  return {
-    payload: "image deleted",
-    status: "success"
+    throw new Error("failed to delete image from s3")
   }
 }
 
