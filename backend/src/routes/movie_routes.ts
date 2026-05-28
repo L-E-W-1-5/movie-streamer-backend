@@ -645,7 +645,6 @@ movieRouter.post('/image_delete', async (req, res) => {
 
 movieRouter.post('/update_image', uploadImage, async (req, res) => {
 
-  
   const { imagesUp } = req.body
 
   if(imagesUp){

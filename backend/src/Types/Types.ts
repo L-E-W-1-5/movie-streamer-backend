@@ -15,7 +15,8 @@ export type Images = {
   url: string,
   mimeType: string,
   title: string,
-  originalName: string
+  originalName: string,
+  usage?: string | null
 }
 
 export type S3File = Express.Multer.File & {

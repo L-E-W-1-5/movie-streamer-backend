@@ -18,17 +18,18 @@ type MovieData = {
 
 export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images }: MovieData) => {
 
-    const formattedTitle = title.replaceAll(" ", "-");
-console.log("formattedTitle", formattedTitle);
+    //const formattedTitle = title.replaceAll(" ", "-");
+//console.log("formattedTitle", formattedTitle);
 
-    const imageLocations: Images[] = images.map((image: S3File) => {
+    const imageLocations: Images[] = images.map((image: S3File, index: number) => {
 
       return {
         key: image.key, //`images/${formattedTitle}/${image.originalname}`,
         url: image.location, //`https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
         mimeType: image.mimetype,
         title,
-        originalName: image.originalname
+        originalName: image.originalname,
+        usage: (index === 0 ? 'container' : index === 1 ? 'card' : 'other')
       };
     });
 
@@ -56,7 +57,7 @@ console.log("formattedTitle", formattedTitle);
 
             imageLocations.map(img => 
 
-                movieModel.addImage(movie.id, img)
+                movieModel.addImage(movie.id, img, img.usage)
             )
         );
 

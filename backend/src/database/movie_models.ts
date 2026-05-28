@@ -74,6 +74,8 @@ export const getMovies = async () => {
             GROUP BY movies.id
         `)
 
+    console.log(gptQuery.rows[2].images)
+
     if(!gptQuery.rows[0]){
         
         throw new Error("movies not loaded");
@@ -251,9 +253,6 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
 //key: string, url: string, mimeType: string, title: string, originalName: string, usage: string | null = null) => {
 export const addImage = async (movieId: number, image: Images, usage: string | null = null) => {   
 
-  
-
-
     const result = await pool.query(`
             INSERT INTO images (movie_id, key, url, mime_type, title, original_name, usage)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -296,7 +295,6 @@ export const deleteImage = async (imageId: number) => {
 
 
 export const updateImage = async (key: number, usage: string) => {
-
 
     let updatedImage;
 
