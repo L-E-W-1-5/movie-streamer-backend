@@ -10,13 +10,17 @@ type MovieData = {
     year: number,
     length: string,
     dbPath: string,
-    images: S3File[]         
+    images: S3File[],
+    media_format: string,
+    season_number?: number,
+    episode_number?: number,
+    episode_title?: string      
 }
 
 
 
 
-export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images }: MovieData) => {
+export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images, media_format, season_number, episode_number, episode_title }: MovieData) => {
 
     //const formattedTitle = title.replaceAll(" ", "-");
 //console.log("formattedTitle", formattedTitle);
@@ -35,6 +39,8 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
 
     console.log("imageLocations", imageLocations);
 
+
+    //TODO: Add logic to handle media_format, season_number, episode_number, and episode_title if needed
     const movie = await movieModel.addMovie(
         title,
         dbPath,

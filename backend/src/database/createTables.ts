@@ -21,8 +21,61 @@ export async function createMovieTable() {
 
     }catch(err){
 
-        console.log(err)
-    }
+        console.log(err);
+    };
+};
+
+
+export async function alterMovieTable() {
+
+    // This has now been run so shouldnt need it again, if recreating the table, use the function below with the updated schema.
+
+    try{
+
+        await pool.query(
+            `ALTER TABLE movies
+            ADD COLUMN media_format VARCHAR(50) NOT NULL DEFAULT 'movie',
+            ADD COLUMN episode_title VARCHAR(255),
+            ADD COLUMN season_number INTEGER,
+            ADD COLUMN episode_number INTEGER;
+
+            ALTER TABLE movies
+            RENAME TO media
+            ;`)
+
+    }catch(err){
+
+        console.log(err);
+    };
+};
+
+
+export async function createMediaFormatTable() {
+
+    try{
+            //TODO: if remake needed, use this table 
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS media (
+            id SERIAL PRIMARY KEY, 
+            key VARCHAR(255) NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            description VARCHAR,
+            length VARCHAR,
+            year INTEGER,
+            genre VARCHAR(50),
+            media_format VARCHAR(50) NOT NULL DEFAULT 'movie',
+            episode_title VARCHAR(255),
+            season_number INTEGER,
+            episode_number INTEGER,
+            timestamp TIMESTAMP DEFAULT NOW(),
+            times_played INTEGER DEFAULT 0 
+            );`
+        );
+
+    }catch(err){
+
+        console.log(err);
+    };
 };
 
 

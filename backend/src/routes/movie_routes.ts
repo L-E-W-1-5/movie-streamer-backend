@@ -42,7 +42,7 @@ declare global {
 
     interface Request {
 
-      movieFolder?: string;
+      mediaFolder?: string;  
 
       playlistKey?: string;
     }
@@ -63,19 +63,24 @@ const uploadViaStream = multer({
 
     contentType: multers3.AUTO_CONTENT_TYPE,
 
-    key: function (
-      req: Request,
-      file,
-      cb
-    ) {
+    key: function (req: Request, file, cb) {
 
       const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
 
       const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
-      
-      if(!req.movieFolder){
 
-        req.movieFolder = `movies/${title}`;
+      const seasonNumber = req.query.season ? `season_${req.query.season}` : null;
+
+      const episodeNumber = req.query.episode ? `episode_${req.query.episode}` : null;
+      
+      if(!req.mediaFolder && !seasonNumber && !episodeNumber){ //TODO: maybe need to add '!req.seasonNumber && !req.episodeNumber' here too
+
+        req.mediaFolder = `movies/${title}`;
+      }
+
+      if(!req.mediaFolder && seasonNumber && episodeNumber){
+
+        req.mediaFolder = `series/${title}/${seasonNumber}/${episodeNumber}`;
       }
 
       let key: string;
@@ -86,7 +91,7 @@ const uploadViaStream = multer({
       
       }else{
 
-        key = `${req.movieFolder}/${file.originalname}`;
+        key = `${req.mediaFolder}/${file.originalname}`;
 
         if(file.originalname.endsWith('.m3u8') && !req.playlistKey){
 
@@ -179,10 +184,13 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
 
     const isFirstBatch = req.body.isFirstBatch === "true";
 
-    if(!isFirstBatch) return res.status(200).json({
+    if(!isFirstBatch) {
+      
+      return res.status(200).json({
 
-      status: "success"
-    });
+        status: "success"
+      });
+    };
 
     const { playlistKey } = req;
 
@@ -193,19 +201,34 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
     });
 
 
-    const { title, genre, description, year, length } = req.body;
+    const { title, genre, description, year, length, media_format, season_number, episode_number, episode_title } = req.body;
 
     const files = req.files as { [ fieldName: string ] : S3File[] };
 
-    const movie = await createMovieStream({
+   // TODO: refactor movie table, then addMovie function and createMovieStream function to work with new series properties.
+     const movie = await createMovieStream({
       title,
       genre,
       description,
       year: year ? parseInt(year) : 1,
       length,
+      media_format,
+      season_number,
+      episode_number,
+      episode_title,
       dbPath: playlistKey!,
       images: files['images[]'] || []
     });
+
+    // const movie = await createMovieStream({
+    //   title,
+    //   genre,
+    //   description,
+    //   year: year ? parseInt(year) : 1,
+    //   length,
+    //   dbPath: playlistKey!,
+    //   images: files['images[]'] || []
+    // });
 
     console.log("movie created", movie);
 

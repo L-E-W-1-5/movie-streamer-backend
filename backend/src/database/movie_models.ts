@@ -25,14 +25,14 @@ type ImageData = {
 }
 
 
-
+//TODO: Add logic to handle media_format, season_number, episode_number, and episode_title if needed
 export const addMovie = async (title: string, key: string, genre: string = "", description: string = "", year: number = 1, length: string = "") => {
 
    
     
-//change this so that if the movie is in a folder, the key will be the file path and the title will remailn the same
+//TODO: refactor to acomodate new properties for series uploads.
     const createMovieEntry = await pool.query(`
-            INSERT INTO movies (title, key, genre, description, year, length)
+            INSERT INTO media (title, key, genre, description, year, length)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *;
         `, [title, key, genre, description, year, length])
@@ -40,7 +40,7 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 
     if(!createMovieEntry?.rows[0]){
 
-        throw new Error("movie not added to the database");
+        throw new Error("media not added to the database");
     };
     console.log("createMovieEntry", createMovieEntry.rows[0]);
 
@@ -52,7 +52,7 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 export const getMovies = async () => {
 
     const gptQuery = await pool.query(`
-        SELECT movies.*,
+        SELECT media.*,
             COALESCE(
                 JSON_AGG(
                     JSON_BUILD_OBJECT(
@@ -69,16 +69,16 @@ export const getMovies = async () => {
                 FILTER (WHERE images.id IS NOT NULL),
                 '[]'
             ) AS images
-            FROM movies
-            LEFT JOIN images ON movies.id = images.movie_id
-            GROUP BY movies.id
+            FROM media
+            LEFT JOIN images ON media.id = images.movie_id
+            GROUP BY media.id
         `)
 
     console.log(gptQuery.rows[2].images)
 
     if(!gptQuery.rows[0]){
         
-        throw new Error("movies not loaded");
+        throw new Error("media not loaded");
     }
 
     return gptQuery.rows;
@@ -89,7 +89,7 @@ export const getMovies = async () => {
 export const deleteMovie = async (id: string) => {
 
     const movie = await pool.query(`
-            DELETE FROM movies
+            DELETE FROM media
             WHERE id = $1
             RETURNING *
         `, [id])
@@ -98,10 +98,10 @@ export const deleteMovie = async (id: string) => {
 
     if(!movie.rows[0]){
 
-        throw new Error("movie not deleted from database");
+        throw new Error("media not deleted from database");
     }
 
-    console.log("movie deleted from database", movie.rows[0]);
+    console.log("media deleted from database", movie.rows[0]);
 
     const imageRemoved = await pool.query(`
             DELETE FROM images
@@ -124,7 +124,7 @@ export const updateMovieDetails = async (title: string, description: string = ""
 
 
     const updatedMovie = await pool.query(`
-            UPDATE movies
+            UPDATE media
             SET title = $1,
             description = $2,
             genre = $3,
@@ -156,7 +156,7 @@ export const updateMovieDetails = async (title: string, description: string = ""
 export const increaseTimesPlayed = async (id: number) => {
 
         await pool.query(`
-            UPDATE movies
+            UPDATE media
             SET times_played = times_played + 1
             WHERE id = $1
         `, [id])
