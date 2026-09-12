@@ -27,6 +27,8 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
 
     const imageLocations: Images[] = images.map((image: S3File, index: number) => {
 
+       // TODO: consider adding season and episode numbers to image path if they exist
+
       return {
         key: image.key, //`images/${formattedTitle}/${image.originalname}`,
         url: image.location, //`https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/images/${formattedTitle}/${image.originalname}`,
@@ -47,7 +49,11 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
         genre,
         description,
         year,
-        length
+        length,
+        media_format,
+        season_number,
+        episode_number,
+        episode_title
     );
 
     console.log("createStream 43", movie);

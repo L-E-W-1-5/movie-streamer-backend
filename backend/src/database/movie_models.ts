@@ -25,17 +25,14 @@ type ImageData = {
 }
 
 
-//TODO: Add logic to handle media_format, season_number, episode_number, and episode_title if needed
-export const addMovie = async (title: string, key: string, genre: string = "", description: string = "", year: number = 1, length: string = "") => {
 
-   
+export const addMovie = async (title: string, key: string, genre: string = "", description: string = "", year: number = 1, length: string = "", media_format: string = "movie", season_number: number | null = null, episode_number: number | null = null, episode_title: string | null = null) => {
     
-//TODO: refactor to acomodate new properties for series uploads.
     const createMovieEntry = await pool.query(`
-            INSERT INTO media (title, key, genre, description, year, length)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO media (title, key, genre, description, year, length, media_format, season_number, episode_number, episode_title)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *;
-        `, [title, key, genre, description, year, length])
+        `, [title, key, genre, description, year, length, media_format, season_number, episode_number, episode_title])
     
 
     if(!createMovieEntry?.rows[0]){
@@ -49,7 +46,7 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 
 
 
-export const getMovies = async () => {
+export const getMedia = async () => {
 
     const gptQuery = await pool.query(`
         SELECT media.*,
@@ -251,7 +248,9 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
 
 
 //key: string, url: string, mimeType: string, title: string, originalName: string, usage: string | null = null) => {
-export const addImage = async (movieId: number, image: Images, usage: string | null = null) => {   
+export const addImage = async (movieId: number, image: Images, usage: string | null = null) => { 
+
+//TODO: consider adding season and episode numbers to image path if they exist
 
     const result = await pool.query(`
             INSERT INTO images (movie_id, key, url, mime_type, title, original_name, usage)

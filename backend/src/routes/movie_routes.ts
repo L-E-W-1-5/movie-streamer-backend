@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { deleteImage, getMovies, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage } from '../database/movie_models.js'
+import { deleteImage, getMedia, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
@@ -29,10 +29,11 @@ const client = new S3Client({
 
   requestHandler: new NodeHttpHandler({
     httpsAgent: new https.Agent({
-      maxSockets: 200 // or 300 for HLS
-    }),
-    
+      maxSockets: 10, // or 300 for HLS
+      keepAlive: true,
+    }), 
   })
+
 });
 
 
@@ -65,6 +66,8 @@ const uploadViaStream = multer({
 
     key: function (req: Request, file, cb) {
 
+      console.log(`s3 upload starting: ${file.originalname}`);
+
       const rawTitle = typeof req.query.title === "string" ? req.query.title : "untitled";
 
       const title = slugify(rawTitle || 'untitled', { lower: true, strict: true });
@@ -73,12 +76,16 @@ const uploadViaStream = multer({
 
       const episodeNumber = req.query.episode ? `episode_${req.query.episode}` : null;
       
-      if(!req.mediaFolder && !seasonNumber && !episodeNumber){ //TODO: maybe need to add '!req.seasonNumber && !req.episodeNumber' here too
+      if(!req.mediaFolder && !seasonNumber && !episodeNumber){ 
+
+        console.log("no season or episode numbers found, setting mediaFolder to movies", title);
 
         req.mediaFolder = `movies/${title}`;
       }
 
       if(!req.mediaFolder && seasonNumber && episodeNumber){
+
+        console.log("season and episode numbers found, setting mediaFolder", seasonNumber, episodeNumber);
 
         req.mediaFolder = `series/${title}/${seasonNumber}/${episodeNumber}`;
       }
@@ -86,7 +93,7 @@ const uploadViaStream = multer({
       let key: string;
 
       if(file.fieldname === 'images[]'){
-
+        //TODO: consider adding season and episode numbers to image path if they exist
         key = `images/${title}/${file.originalname}`;
       
       }else{
@@ -148,7 +155,7 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
   try{
 
-    movies = await getMovies()
+    movies = await getMedia()
 
   }catch(err){
 
@@ -176,7 +183,9 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 
 
-movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
+movieRouter.post('/stream', (req, res, next) => {console.log("starting multer"); next();}, uploadStreamFields, async (req, res) => {
+
+  console.log(`batchNumber: ${parseInt(req.body.batchNumber) + 1}`);
 
   try{
 
@@ -193,6 +202,8 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
     };
 
     const { playlistKey } = req;
+
+    console.log("playlistKey", playlistKey);
 
     if(isFirstBatch && !playlistKey) return res.status(400).json({
 
@@ -220,15 +231,6 @@ movieRouter.post('/stream', uploadStreamFields, async (req, res) => {
       images: files['images[]'] || []
     });
 
-    // const movie = await createMovieStream({
-    //   title,
-    //   genre,
-    //   description,
-    //   year: year ? parseInt(year) : 1,
-    //   length,
-    //   dbPath: playlistKey!,
-    //   images: files['images[]'] || []
-    // });
 
     console.log("movie created", movie);
 

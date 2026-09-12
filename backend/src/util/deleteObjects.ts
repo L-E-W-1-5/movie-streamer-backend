@@ -5,9 +5,9 @@ import { ListObjectsV2Command, DeleteObjectsCommand, DeleteObjectCommand } from 
 
 export const deleteObject = async (fileName: string) => {
 
-    //const folderName = fileName.substring(0, fileName.indexOf('/')) + '/';
-
     const folderName = fileName.substring(0, fileName.lastIndexOf('/')) + '/';
+
+    console.log("deleteObject", fileName, folderName)
 
     try{
 
@@ -16,7 +16,7 @@ export const deleteObject = async (fileName: string) => {
                 Prefix: folderName
         };
 
-        const segmentList = await s3Client.send(new ListObjectsV2Command(params))
+        const segmentList = await s3Client.send(new ListObjectsV2Command(params)) // ListObjectsV2 will only return a maximum of 1000 objects, so if you have more than that, you'll need to handle pagination.
 
     
         if(!segmentList.Contents?.length){

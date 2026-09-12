@@ -80,7 +80,7 @@ export async function createMediaFormatTable() {
 
 
 export async function createImagesTable() {
-
+//TODO: consider adding season and episode numbers to image path if they exist
     try{
 
         await pool.query(
