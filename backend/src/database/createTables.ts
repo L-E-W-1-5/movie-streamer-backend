@@ -103,7 +103,8 @@ export async function createImagesTable() {
 }
 
 
-//TODO: create the series table
+//TODO: update media table to include a series reference DEFAULT null;
+
 export const createSeriesTable = async() => {
 
     try{

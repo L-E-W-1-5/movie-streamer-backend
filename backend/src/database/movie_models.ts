@@ -68,9 +68,27 @@ export const addSeries = async (title: string, description: string = "", genre: 
 
 export const getSeries = async () => {
 
-    const getSeriesQuery = await pool.query(`
-            SELECT *
+        const getSeriesQuery = await pool.query(`
+        SELECT series.*,
+            COALESCE(
+                JSON_AGG(
+                    JSON_BUILD_OBJECT(
+                        'id', images.id,
+                        'key', images.key,
+                        'mime_type', images.mime_type,
+                        'movie_title', images.title,
+                        'original_name', images.original_name,
+                        'movie_id', images.movie_id,
+                        'url', images.url,
+                        'usage', images.usage
+                    )
+                ) 
+                FILTER (WHERE images.id IS NOT NULL),
+                '[]'
+            ) AS images
             FROM series
+            LEFT JOIN images ON series.id = images.movie_id
+            GROUP BY series.id
         `)
 
     if(!getSeriesQuery.rows[0]){

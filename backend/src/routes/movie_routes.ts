@@ -186,13 +186,15 @@ mediaRouter.get('/', async (req:Request, res: Response) => {
 
 
 //TODO: create the get series route
-mediaRouter.get('/series', (req, res) => {
+mediaRouter.get('/series', async (req, res) => {
+
+  console.log("getSeries")
 
   let series;
 
   try{
 
-    series = getSeries()
+    series = await getSeries()
   
   }catch(err) {
 
@@ -203,6 +205,8 @@ mediaRouter.get('/series', (req, res) => {
       status: "error"
     })
   }
+
+  console.log("series", series)
 
   return res.status(200).json({
     payload: series,
