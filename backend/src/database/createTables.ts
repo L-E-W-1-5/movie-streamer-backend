@@ -103,6 +103,27 @@ export async function createImagesTable() {
 }
 
 
+//TODO: create the series table
+export const createSeriesTable = async() => {
+
+    try{
+
+        await pool.query( 
+            `CREATE TABLE IF NOT EXISTS series (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                description VARCHAR,
+                genre VARCHAR(50),
+                year INTEGER
+            )`
+        )
+    }catch(err){
+
+        console.log(err)
+    }
+}
+
+
 export const createUsersTable = async() => {
 
     try{

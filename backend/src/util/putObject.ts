@@ -74,9 +74,10 @@ export const putImage = async ( originalName: string, title: string, image: Buff
             return;
         }
 
+
         const keySpaceChange = params.Key.replaceAll(" ", "-") //TODO: test this works: changed from '+' to '-' because thats what multer-s3 saves as the key.
 
-        console.log(params.Key, keySpaceChange)
+        console.log(params.Key, keySpaceChange )
 
         let url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${keySpaceChange}`
 

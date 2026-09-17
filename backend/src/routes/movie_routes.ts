@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { deleteImage, getMedia, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, addToDatabase, updateImage } from '../database/movie_models.js'
+import { deleteImage, getMedia, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, updateImage, getSeries } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
@@ -9,11 +9,11 @@ import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/ge
 import { type Images, type S3File } from '../Types/Types.js';
 import { S3Client } from "@aws-sdk/client-s3"
 import slugify from 'slugify';
-import { createMovieStream } from '../services/movie_service.js';
+import { createMovieStream, saveSeriesToDatabase, addToDatabase } from '../services/movie_service.js';
 import https from "https";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
-const movieRouter = express.Router();
+const mediaRouter = express.Router();
 
 const storage = multer.memoryStorage();
 
@@ -148,8 +148,10 @@ const uploadImage = upload.fields([
 
 
 
+
+
 // fetch all movies at login 
-movieRouter.get('/', async (req:Request, res: Response) => {
+mediaRouter.get('/', async (req:Request, res: Response) => {
 
   let movies
 
@@ -183,7 +185,66 @@ movieRouter.get('/', async (req:Request, res: Response) => {
 
 
 
-movieRouter.post('/stream', (req, res, next) => {console.log("starting multer"); next();}, uploadStreamFields, async (req, res) => {
+//TODO: create the get series route
+mediaRouter.get('/series', (req, res) => {
+
+  let series;
+
+  try{
+
+    series = getSeries()
+  
+  }catch(err) {
+
+    console.log(err)
+
+    return res.status(500).json({
+      payload: "failed to load series",
+      status: "error"
+    })
+  }
+
+  return res.status(200).json({
+    payload: series,
+    status: "success"
+  })
+})
+
+
+
+
+mediaRouter.post('/series', upload.array('images[]'), async (req: Request, res: Response) => {
+
+  try{
+
+    const { title, description, genre, year } = req.body;
+
+    const images = req.files as S3File[]
+
+    console.log(images);
+
+    const savedToDatabase = await saveSeriesToDatabase(title, description, genre, year, images);
+
+    console.log(savedToDatabase)
+
+    return res.status(200).json({
+      payload: savedToDatabase,
+      status: "success"
+    });
+  
+  }catch(err){
+
+    return res.status(500).json({
+      payload: err,
+      status: "error"
+    });
+  };
+  
+});
+
+
+
+mediaRouter.post('/stream', (req, res, next) => {console.log("starting multer"); next();}, uploadStreamFields, async (req, res) => {
 
   console.log(`batchNumber: ${parseInt(req.body.batchNumber) + 1}`);
 
@@ -254,7 +315,7 @@ movieRouter.post('/stream', (req, res, next) => {console.log("starting multer");
 
 
 //upload hls
-movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
+mediaRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
   console.log("hls route")
 
@@ -348,7 +409,7 @@ movieRouter.post('/hls', uploadFieldsHLS, async (req, res) => {
 
 
 // upload new movie
-movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) => {
+mediaRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) => {
 
   let { title } = req.body;  
 
@@ -437,7 +498,7 @@ movieRouter.post('/', uploadFieldsSingle, async (req: Request,  res: Response) =
 
 
 // delete a movie
-movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
+mediaRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
   const { title, id, key } = req.body.movie;
 
@@ -492,7 +553,7 @@ movieRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
 
 // fetch movie from s3
-movieRouter.post('/get_s3', async (req, res) => {
+mediaRouter.post('/get_s3', async (req, res) => {
 
   
   const { key, id } = req.body.film;
@@ -553,7 +614,7 @@ movieRouter.post('/get_s3', async (req, res) => {
 
 
 //update movie details and/or images
-movieRouter.post('/update_movie', uploadImage, async (req, res) => {
+mediaRouter.post('/update_movie', uploadImage, async (req, res) => {
 
   let { title, description, genre, year, id, length } = req.body;
 
@@ -619,7 +680,7 @@ movieRouter.post('/update_movie', uploadImage, async (req, res) => {
 
 
 // delete an image from a movie
-movieRouter.post('/image_delete', async (req, res) => {
+mediaRouter.post('/image_delete', async (req, res) => {
 
   const image = req.body.image
 
@@ -668,7 +729,7 @@ movieRouter.post('/image_delete', async (req, res) => {
 });
 
 
-movieRouter.post('/update_image', uploadImage, async (req, res) => {
+mediaRouter.post('/update_image', uploadImage, async (req, res) => {
 
   const { imagesUp } = req.body
 
@@ -715,7 +776,7 @@ movieRouter.post('/update_image', uploadImage, async (req, res) => {
 
 
 
-export default movieRouter
+export default mediaRouter
 
 
 // {

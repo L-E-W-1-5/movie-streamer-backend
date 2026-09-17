@@ -46,6 +46,43 @@ export const addMovie = async (title: string, key: string, genre: string = "", d
 
 
 
+export const addSeries = async (title: string, description: string = "", genre: string = "", year: number = 1) => {
+
+    const seriesQuery = await pool.query(`
+            INSERT INTO series (title, description, genre, year)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *;
+        `, [title, description, genre, year])
+
+    if(!seriesQuery?.rows[0]){
+
+        throw new Error("series not added to database");
+    };
+
+    console.log("seriesQuery", seriesQuery);
+
+    return seriesQuery.rows[0];
+}
+
+
+
+export const getSeries = async () => {
+
+    const getSeriesQuery = await pool.query(`
+            SELECT *
+            FROM series
+        `)
+
+    if(!getSeriesQuery.rows[0]){
+
+        throw new Error("failed to get series from database");
+    }
+
+    return getSeriesQuery.rows;
+}
+
+
+
 export const getMedia = async () => {
 
     const gptQuery = await pool.query(`
@@ -160,91 +197,6 @@ export const increaseTimesPlayed = async (id: number) => {
 
 }
 
-
-export const saveImagesToDatabase = async (images: Express.Multer.File[], title: string) => {
-
-    let imageLocations: Images[] = [];
-
-    if(images){
-    
-        for(const image of images){
-    
-          const imageRes = await putImage(image.originalname, title, image.buffer, image.mimetype)
-    
-          if(imageRes){
-    
-            imageLocations.push(imageRes);
-          };
-    
-        };
-    };
-
-    return imageLocations;
-}
-
-
-export const addToDatabase = async (req: Request, filePath: string | null = null, imageLocations: Images[] | []) => {
-
-  let { title, genre, description, year, length } = req.body;
-
-  let key: string = title;
-
-  if(filePath){
-
-    key = filePath;
-  }
-
-  let movieDatabaseRecord, imageDatabaseRecord = []
-
-  console.log("150", imageLocations)
-
-  try{
-
-    if (year !== undefined){
-
-      year = parseInt(year);
-    }
-
-    movieDatabaseRecord = await addMovie(title, key, genre, description, year, length);
-
-    
-
-    if(imageLocations.length > 0){
-
-      for(const image of imageLocations){
-
-        try{
-
-          const imageRes = await addImage(movieDatabaseRecord.id, image)   //.key, image.url, image.mimeType, image.title, image.originalName);
-
-          imageDatabaseRecord.push(imageRes);
-
-        }catch(err){
-
-          console.error(err)
-        };
-      };
-    };
-
-  }catch(err){
-
-    console.log(err);
-
-    return {
-
-      data: "not added",
-      status: "error"
-    };
-  };
-
-  movieDatabaseRecord.images = imageDatabaseRecord;
-
-  return {
-
-    data: movieDatabaseRecord,
-    status: "success"
-  };
-}
 
 
 //key: string, url: string, mimeType: string, title: string, originalName: string, usage: string | null = null) => {
