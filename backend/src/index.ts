@@ -4,7 +4,7 @@ import cors from 'cors';
 import morgan from "morgan";
 import userRouter from './routes/user_routes.js'
 import mediaRouter from './routes/movie_routes.js'
-import { createSeriesTable, updateImagesTable, createUsersTable, dropTable, checkTableExists, createMovieTable, createMessagesTable, createImagesTable, alterMovieTable } from './database/createTables.js'
+import { addSeriesIdColumn, createSeriesTable, updateImagesTable, createUsersTable, dropTable, checkTableExists, createMovieTable, createMessagesTable, createImagesTable, alterMovieTable } from './database/createTables.js'
 import messageRouter from './routes/message_routes.js';
 import { verifyToken } from './middleware/auth.js';
 //import { randomBytes } from 'crypto';

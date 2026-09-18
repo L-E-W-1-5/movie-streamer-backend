@@ -103,8 +103,6 @@ export async function createImagesTable() {
 }
 
 
-//TODO: update media table to include a series reference DEFAULT null;
-
 export const createSeriesTable = async() => {
 
     try{
@@ -122,6 +120,18 @@ export const createSeriesTable = async() => {
 
         console.log(err)
     }
+};
+
+
+//this has been run
+export const addSeriesIdColumn = async () => {
+
+    await pool.query(`
+            ALTER TABLE media
+            ADD COLUMN IF NOT EXISTS series_id INTEGER
+            REFERENCES series(id)
+            ON DELETE SET NULL; 
+        `)
 }
 
 
