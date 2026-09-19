@@ -54,13 +54,16 @@ export const putImage = async ( originalName: string, title: string, image: Buff
     console.log(image, title)
 
     const folderName = `images/${title}/${originalName}`
+
     //const folderName = `images/${originalName}`
+
+    const keySpaceChange = folderName.replaceAll(" ", "-") //TODO: test this works: changed from '+' to '-' because thats what multer-s3 saves as the key.
 
     try{
 
         const params = {
             Bucket: process.env.S3_BUCKET_NAME,
-            Key: `${folderName}`,
+            Key: `${keySpaceChange}`,
             Body: image,
             ContentType: mimeType
         }
@@ -73,9 +76,6 @@ export const putImage = async ( originalName: string, title: string, image: Buff
 
             return;
         }
-
-
-        const keySpaceChange = params.Key.replaceAll(" ", "-") //TODO: test this works: changed from '+' to '-' because thats what multer-s3 saves as the key.
 
         console.log(params.Key, keySpaceChange )
 
