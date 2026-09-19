@@ -24,3 +24,19 @@ export type S3File = Express.Multer.File & {
   key: string;
   bucket: string;
 };
+
+
+export type MovieData = {
+    title: string,
+    genre: string,
+    description: string,
+    year: number,
+    length: string,
+    dbPath: string,
+    images: S3File[],
+    media_format: string,
+    season_number?: number,
+    episode_number?: number,
+    episode_title?: string,
+    series_id: number   
+}

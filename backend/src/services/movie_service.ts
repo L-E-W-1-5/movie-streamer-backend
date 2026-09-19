@@ -2,22 +2,10 @@ import * as mediaModel from '../database/movie_models.js';
 import { type Movie, type Images, type S3File } from '../Types/Types.js';
 import { putImage } from '../util/putObject.js';
 import express, { type Express, type Request, type Response , type Application } from 'express';
+import { type MovieData } from '../Types/Types.js';
 
 
 
-type MovieData = {
-    title: string,
-    genre: string,
-    description: string,
-    year: number,
-    length: string,
-    dbPath: string,
-    images: S3File[],
-    media_format: string,
-    season_number?: number,
-    episode_number?: number,
-    episode_title?: string      
-}
 
 type SeriesData = {
     title: string,
@@ -29,7 +17,7 @@ type SeriesData = {
 
 
 
-export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images, media_format, season_number, episode_number, episode_title }: MovieData) => {
+export const createMovieStream = async ({ title, genre, description, year, length, dbPath, images, media_format, season_number, episode_number, episode_title, series_id }: MovieData) => {
 
     //const formattedTitle = title.replaceAll(" ", "-");
 //console.log("formattedTitle", formattedTitle);
@@ -62,7 +50,8 @@ export const createMovieStream = async ({ title, genre, description, year, lengt
         media_format,
         season_number,
         episode_number,
-        episode_title
+        episode_title,
+        series_id
     );
 
     console.log("createStream 43", movie);

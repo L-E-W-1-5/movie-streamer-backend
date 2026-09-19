@@ -250,8 +250,6 @@ mediaRouter.post('/series', upload.array('images[]'), async (req: Request, res: 
 
 mediaRouter.post('/stream', (req, res, next) => {console.log("starting multer"); next();}, uploadStreamFields, async (req, res) => {
 
-  console.log(`batchNumber: ${parseInt(req.body.batchNumber) + 1}`);
-
   try{
 
     console.log(`Received batch ${parseInt(req.body.batchNumber) + 1}`);
@@ -277,7 +275,7 @@ mediaRouter.post('/stream', (req, res, next) => {console.log("starting multer");
     });
 
 
-    const { title, genre, description, year, length, media_format, season_number, episode_number, episode_title } = req.body;
+    const { title, genre, description, year, length, media_format, season_number, episode_number, episode_title, series_id } = req.body;
 
     const files = req.files as { [ fieldName: string ] : S3File[] };
 
@@ -292,6 +290,7 @@ mediaRouter.post('/stream', (req, res, next) => {console.log("starting multer");
       season_number,
       episode_number,
       episode_title,
+      series_id,
       dbPath: playlistKey!,
       images: files['images[]'] || []
     });

@@ -26,13 +26,13 @@ type ImageData = {
 
 
 
-export const addMovie = async (title: string, key: string, genre: string = "", description: string = "", year: number = 1, length: string = "", media_format: string = "movie", season_number: number | null = null, episode_number: number | null = null, episode_title: string | null = null) => {
+export const addMovie = async (title: string, key: string, genre: string = "", description: string = "", year: number = 1, length: string = "", media_format: string = "movie", season_number: number | null = null, episode_number: number | null = null, episode_title: string | null = null, series_id: number | null = null) => {
     
     const createMovieEntry = await pool.query(`
-            INSERT INTO media (title, key, genre, description, year, length, media_format, season_number, episode_number, episode_title)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO media (title, key, genre, description, year, length, media_format, season_number, episode_number, episode_title, series_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *;
-        `, [title, key, genre, description, year, length, media_format, season_number, episode_number, episode_title])
+        `, [title, key, genre, description, year, length, media_format, season_number, episode_number, episode_title, series_id])
     
 
     if(!createMovieEntry?.rows[0]){
