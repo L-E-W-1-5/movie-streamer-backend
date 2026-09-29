@@ -50,15 +50,6 @@ const port = process.env.PORT || 3001;
 // testSMTP();
 
 
-
-
-app.get('/', (req: Request, res: Response) => {
-
-  res.send('Welcome to Express & TypeScript Server');
-
-});
-
-
 app.use('/movies', verifyToken, mediaRouter);
 
 app.use('/users', userRouter);

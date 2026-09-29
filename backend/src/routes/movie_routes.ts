@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { deleteImage, getMedia, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, updateImage, getSeries } from '../database/movie_models.js'
+import { deleteImage, getMedia, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, updateImage, getSeries, updateSeriesDetails } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
@@ -9,7 +9,7 @@ import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/ge
 import { type Images, type S3File } from '../Types/Types.js';
 import { S3Client } from "@aws-sdk/client-s3"
 import slugify from 'slugify';
-import { createMovieStream, saveSeriesToDatabase, addToDatabase } from '../services/movie_service.js';
+import { createMovieStream, saveSeriesToDatabase, addToDatabase, saveImagesToS3 } from '../services/movie_service.js';
 import https from "https";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
@@ -678,6 +678,67 @@ mediaRouter.post('/update_movie', uploadImage, async (req, res) => {
   })
 
   
+});
+
+
+
+mediaRouter.post('/update_series', upload.array('image[]'), async (req, res) => {
+
+  const { id, title, genre, year, description } = req.body;
+
+  const images = req.files as S3File[]
+
+  console.log("series edit route", id, title, genre, year, description);
+
+  const imageDbResponse: Images[] = [];
+
+  if(images && images.length > 0){
+
+    const imageLocations: Images[] = await saveImagesToS3(images, title);
+    
+    console.log("series images locations", imageLocations)
+
+    for(const image of imageLocations){
+
+      const usage = req.body[image.originalName] ? req.body[image.originalName] : 'other';
+
+      const imageRecord = await addImage(id, image, usage);
+
+      console.log("series record", imageRecord)
+
+      imageDbResponse.push(imageRecord);
+    };
+
+  };
+
+  let updatedTable
+
+  try{
+
+    updatedTable = await updateSeriesDetails(id, title, genre, year, description);
+  
+  }catch(err){
+
+    console.log(err);
+
+    return res.status(500).json({
+      payload: err,
+      status: "error"
+    })
+  }
+
+  if(imageDbResponse.length > 0){
+
+    updatedTable.images = imageDbResponse
+  }
+
+  console.log("series table updated", updatedTable)
+
+  return res.status(200).json({
+    payload: updatedTable,
+    status: 'success'
+  })
+
 })
 
 

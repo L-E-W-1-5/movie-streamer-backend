@@ -174,7 +174,6 @@ export const deleteMovie = async (id: string) => {
 
 export const updateMovieDetails = async (title: string, description: string = "", genre: string = "", year: number = 1, id: number, length: string = "") => {
 
-
     const updatedMovie = await pool.query(`
             UPDATE media
             SET title = $1,
@@ -190,7 +189,7 @@ export const updateMovieDetails = async (title: string, description: string = ""
 
         console.log(err);
 
-        throw new Error(`error updating database: ${err}`);
+        throw new Error(`error updating media database: ${err}`);
     })
 
     if(updatedMovie.rows[0]){
@@ -202,6 +201,37 @@ export const updateMovieDetails = async (title: string, description: string = ""
         return `error updating database`;
     }
 };
+
+
+
+export const updateSeriesDetails = async (id: number, title: string, genre: string, year: number, description: string) => {
+
+    const updateSeries = await pool.query(`
+            UPDATE series
+            SET title = $1,
+            genre = $2,
+            year = $3,
+            description = $4
+            WHERE id = $5
+            RETURNING *
+        `, [title, genre, year, description, id])
+
+    .catch((err) => {
+
+        console.log(err);
+
+        throw new Error(`error updating series database: ${err}`)
+    })
+
+    if(!updateSeries.rows[0]){
+
+        throw new Error("error updating series database")
+    
+    }else{
+
+        return updateSeries.rows[0]
+    }
+}
 
 
 
@@ -223,7 +253,14 @@ export const addImage = async (movieId: number, image: Images, usage: string | n
 //TODO: consider adding season and episode numbers to image path if they exist
 
     const result = await pool.query(`
-            INSERT INTO images (movie_id, key, url, mime_type, title, original_name, usage)
+            INSERT INTO images (
+            movie_id, 
+            key, 
+            url, 
+            mime_type, 
+            title, 
+            original_name, 
+            usage)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
         `, [movieId, image.key, image.url, image.mimeType, image.title, image.originalName, usage])
