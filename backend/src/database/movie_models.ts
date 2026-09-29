@@ -162,9 +162,10 @@ export const deleteMovie = async (id: string) => {
         `, [id])
 
     console.log("images deleted from database", imageRemoved.rows);
+
     const isDeleted = {
-        image: imageRemoved.rows ? imageRemoved.rows : [],
-        movie: movie.rows[0] ? movie.rows[0] : []
+        movie: movie.rows[0],
+        image: imageRemoved.rows
     }
 
     return isDeleted
@@ -201,6 +202,44 @@ export const updateMovieDetails = async (title: string, description: string = ""
         return `error updating database`;
     }
 };
+
+
+
+export const deleteSeries = async (id: number) => {
+
+    try{
+
+        const deletedSeries = await pool.query(`
+                DELETE FROM series
+                WHERE id = $1
+                RETURNING *
+            `, [id])
+
+
+        if(!deletedSeries.rows[0]){
+
+            throw new Error("not found in database");
+        }
+
+        const deletedSeriesImages = await pool.query(`
+                DELETE FROM images
+                WHERE movie_id = $1
+                RETURNING *
+            `, [id])
+
+
+        return {
+            series: deletedSeries.rows[0],
+            images: deletedSeriesImages.rows || []
+        }
+    
+    }catch(err){
+
+        console.log(err)
+
+        throw new Error(`unable to delete images from database: ${err}`)
+    }  
+}
 
 
 
