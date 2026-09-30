@@ -53,7 +53,9 @@ export const deleteObject = async (fileName: string) => {
 
 
 export const deleteImageFromS3 = async (filePath: string) => {
+
 console.log("deleteImageFromS3", filePath)
+
   try{
 
     const params = {

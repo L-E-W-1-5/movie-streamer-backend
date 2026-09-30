@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { deleteImage, getMedia, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, updateImage, getSeries, updateSeriesDetails, deleteSeries } from '../database/movie_models.js'
+import { deleteImage, getMedia, deleteMovie, updateMovieDetails, increaseTimesPlayed, addImage, updateImage, getSeries, updateSeriesDetails, deleteSeries, deleteSeriesEpisodes } from '../database/movie_models.js'
 import { putImage, putObject } from '../util/putObject.js';
 import { deleteObject, deleteImageFromS3 } from '../util/deleteObjects.js';
 import multer from 'multer';
@@ -188,8 +188,6 @@ mediaRouter.get('/', async (req:Request, res: Response) => {
 
 mediaRouter.get('/series', async (req, res) => {
 
-  console.log("getSeries")
-
   let series;
 
   try{
@@ -205,8 +203,6 @@ mediaRouter.get('/series', async (req, res) => {
       status: "error"
     })
   }
-
-  console.log("series", series)
 
   return res.status(200).json({
     payload: series,
@@ -516,13 +512,18 @@ mediaRouter.post('/delete_movie', async (req: Request, res: Response) => {
 
       databaseReturn = await deleteMovie(id);
 
-      await Promise.all(
+      if(databaseReturn.images){
 
-        databaseReturn.image.map(file =>
+        await Promise.all(
 
-          deleteImageFromS3(file.key)
-        )
-      );
+          databaseReturn.images.map(file =>
+
+            deleteImageFromS3(file.key)
+          )
+        );
+      }
+
+      
 
       if(databaseReturn){
 
@@ -746,26 +747,56 @@ mediaRouter.post('/delete_series', async (req, res) => {
 
   const { id } = req.body.series;
 
-  if(id) return; //just to stop accidents!
+  if (!id) {
+
+    return res.status(400).json({
+      payload: "Series ID is required",
+      status: "error"
+    });
+  } 
 
   try{
 
     const databaseReturn = await deleteSeries(id); //deleting series and images from the database
 
+    console.log("route - database return", databaseReturn);
+/*
+    await Promise.all(
 
-    //TODO: remove images and episodes from database and s3
+      databaseReturn.images.map(image => 
 
-    //loop images & send keys to the s3 image delete function
+        deleteImageFromS3(image.key)
+      )
+    )
+*/
+    const deletedEpisodes = await deleteSeriesEpisodes(id);
 
-    //find all media that has the relevant series id (maybe inside a modal)
+    console.log("route - deleted episodes", deletedEpisodes);
+/*
 
-    //delete all images that relate to each episode
+    await Promise.all(
 
-    //could delete series images using the series id?
+      deletedEpisodes.episodes.map(episode => 
 
+        deleteObject(episode.key)
+      )
+    )
+
+    await Promise.all(
+
+      deletedEpisodes.images.map(image => 
+
+          deleteImageFromS3(image.key)     
+      )
+    )
+    
+*/
 
     return res.status(200).json({
-      payload: databaseReturn,
+      payload: {
+        databaseReturn,
+        deletedEpisodes
+      },
       status: "success"
     })
 
@@ -774,7 +805,7 @@ mediaRouter.post('/delete_series', async (req, res) => {
     console.log(err);
 
     return res.status(500).json({
-      payload: "unable to delete from database",
+      payload: `unable to delete series: ${err}`,
       status: "error"
     })
   }

@@ -126,8 +126,6 @@ export const getMedia = async () => {
             GROUP BY media.id
         `)
 
-    console.log(gptQuery.rows[2].images)
-
     if(!gptQuery.rows[0]){
         
         throw new Error("media not loaded");
@@ -165,7 +163,7 @@ export const deleteMovie = async (id: string) => {
 
     const isDeleted = {
         movie: movie.rows[0],
-        image: imageRemoved.rows
+        images: imageRemoved.rows
     }
 
     return isDeleted
@@ -209,36 +207,134 @@ export const deleteSeries = async (id: number) => {
 
     try{
 
-        const deletedSeries = await pool.query(`
-                DELETE FROM series
+        // const deletedSeries = await pool.query(`
+        //         DELETE FROM series
+        //         WHERE id = $1
+        //         RETURNING *
+        //     `, [id])
+
+        const seletedSeries = await pool.query(`
+                SELECT *
+                FROM series
                 WHERE id = $1
-                RETURNING *
             `, [id])
 
+        console.log("delete series", id, seletedSeries.rows);
 
-        if(!deletedSeries.rows[0]){
+        if(!seletedSeries.rows[0]){
 
             throw new Error("not found in database");
         }
 
-        const deletedSeriesImages = await pool.query(`
-                DELETE FROM images
+        // const deletedSeriesImages = await pool.query(`
+        //         DELETE FROM images
+        //         WHERE movie_id = $1
+        //         RETURNING *
+        //     `, [id])
+
+        const seletedSeriesImages = await pool.query(`
+                SELECT *
+                FROM images
                 WHERE movie_id = $1
-                RETURNING *
             `, [id])
 
+        console.log("delete series: images", id, seletedSeriesImages.rows);
 
         return {
-            series: deletedSeries.rows[0],
-            images: deletedSeriesImages.rows || []
+            series: seletedSeries.rows[0],
+            images: seletedSeriesImages.rows
         }
+
+        // return {
+        //     series: deletedSeries.rows[0],
+        //     images: deletedSeriesImages.rows
+        // }
     
     }catch(err){
 
         console.log(err)
 
-        throw new Error(`unable to delete images from database: ${err}`)
+        throw new Error(`unable to delete from database: ${err}`)
     }  
+};
+
+
+
+export const deleteSeriesEpisodes = async (series_id: number) => {
+
+    try{
+
+        // const deletedEpisodes = await pool.query(`
+        //         DELETE FROM media
+        //         WHERE series_id = $1
+        //         RETURNING *
+        //     `, [series_id])
+
+        const seletedEpisodes = await pool.query(`
+                SELECT *
+                FROM media
+                WHERE series_id = $1
+            `, [series_id])
+
+
+
+        console.log("delete series episodes", series_id, seletedEpisodes.rows)
+
+
+
+
+        const deletedImages =  (await Promise.all(
+
+            seletedEpisodes.rows.map(episode => 
+
+                episodeImageDelete(episode.id)
+            )
+
+        )).flat()
+
+        
+
+        return {
+            episodes: seletedEpisodes.rows,
+            images: deletedImages
+        }
+    
+    }catch(err){
+
+        console.log(err);
+
+        throw new Error(`error deleting episodes from database ${err}`)
+    }
+}
+
+
+
+export const episodeImageDelete = async (media_id: number) => {
+
+    try{ 
+
+        // const deletedImages = await pool.query(`
+        //         DELETE FROM images
+        //         WHERE movie_id = $1
+        //         RETURNING *  
+        //     `, [media_id])
+
+        const seletedImages = await pool.query(`
+                SELECT *
+                FROM images
+                WHERE movie_id = $1 
+            `, [media_id])
+
+        console.log("episode image delete", media_id, seletedImages.rows);
+
+        return seletedImages.rows;
+
+    }catch(err){
+
+        console.log(`error deleting image from database ${err}`)
+
+        throw new Error(`error deleting image from database ${err}`)
+    }
 }
 
 
