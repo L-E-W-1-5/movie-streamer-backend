@@ -9,7 +9,7 @@ import { getObjects, getObjectUnsigned, generateSignedPlaylist} from '../util/ge
 import { type Images, type S3File } from '../Types/Types.js';
 import { S3Client } from "@aws-sdk/client-s3"
 import slugify from 'slugify';
-import { createMovieStream, saveSeriesToDatabase, addToDatabase, saveImagesToS3 } from '../services/movie_service.js';
+import { createMovieStream, saveSeriesToDatabase, addToDatabase, saveImagesToS3, deleteEntireSeries } from '../services/movie_service.js';
 import https from "https";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
@@ -757,45 +757,14 @@ mediaRouter.post('/delete_series', async (req, res) => {
 
   try{
 
-    const databaseReturn = await deleteSeries(id); //deleting series and images from the database
-
-    console.log("route - database return", databaseReturn);
-/*
-    await Promise.all(
-
-      databaseReturn.images.map(image => 
-
-        deleteImageFromS3(image.key)
-      )
-    )
-*/
-    const deletedEpisodes = await deleteSeriesEpisodes(id);
-
-    console.log("route - deleted episodes", deletedEpisodes);
-/*
-
-    await Promise.all(
-
-      deletedEpisodes.episodes.map(episode => 
-
-        deleteObject(episode.key)
-      )
-    )
-
-    await Promise.all(
-
-      deletedEpisodes.images.map(image => 
-
-          deleteImageFromS3(image.key)     
-      )
-    )
+    const deletedData = await deleteEntireSeries(id);
     
-*/
 
     return res.status(200).json({
+
       payload: {
-        databaseReturn,
-        deletedEpisodes
+        seriesReturn: deletedData.seriesDbReturn,
+        episodeReturn: deletedData.episodeDbReturn
       },
       status: "success"
     })
@@ -805,6 +774,7 @@ mediaRouter.post('/delete_series', async (req, res) => {
     console.log(err);
 
     return res.status(500).json({
+
       payload: `unable to delete series: ${err}`,
       status: "error"
     })
@@ -908,6 +878,38 @@ mediaRouter.post('/update_image', uploadImage, async (req, res) => {
   });
 
 });
+
+
+
+mediaRouter.post('/update_image_usage', async (req, res) => {
+
+  const { updates } = req.body;
+
+  try{
+
+    const imageUpdates = await Promise.all(
+
+      updates.map((img: {id: number, usage: string}) => 
+
+        updateImage(img.id, img.usage)
+      )
+    )
+
+    return res.status(200).json({
+
+      payload: imageUpdates,
+      status: "success"
+    })
+  
+  }catch(err){
+
+    return res.status(500).json({
+
+      payload: err,
+      status: "error"
+    })
+  }
+})
 
 
 

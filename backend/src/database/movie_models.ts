@@ -207,48 +207,32 @@ export const deleteSeries = async (id: number) => {
 
     try{
 
-        // const deletedSeries = await pool.query(`
-        //         DELETE FROM series
-        //         WHERE id = $1
-        //         RETURNING *
-        //     `, [id])
-
-        const seletedSeries = await pool.query(`
-                SELECT *
-                FROM series
+        const deletedSeries = await pool.query(`
+                DELETE FROM series
                 WHERE id = $1
+                RETURNING *
             `, [id])
 
-        console.log("delete series", id, seletedSeries.rows);
+        console.log("delete series", id, deletedSeries.rows);
 
-        if(!seletedSeries.rows[0]){
+        if(!deletedSeries.rows[0]){
 
             throw new Error("not found in database");
         }
 
-        // const deletedSeriesImages = await pool.query(`
-        //         DELETE FROM images
-        //         WHERE movie_id = $1
-        //         RETURNING *
-        //     `, [id])
-
-        const seletedSeriesImages = await pool.query(`
-                SELECT *
-                FROM images
+        const deletedSeriesImages = await pool.query(`
+                DELETE FROM images
                 WHERE movie_id = $1
+                RETURNING *
             `, [id])
 
-        console.log("delete series: images", id, seletedSeriesImages.rows);
+        console.log("delete series: images", id, deletedSeriesImages.rows);
 
         return {
-            series: seletedSeries.rows[0],
-            images: seletedSeriesImages.rows
+            series: deletedSeries.rows[0],
+            images: deletedSeriesImages.rows
         }
 
-        // return {
-        //     series: deletedSeries.rows[0],
-        //     images: deletedSeriesImages.rows
-        // }
     
     }catch(err){
 
@@ -264,38 +248,26 @@ export const deleteSeriesEpisodes = async (series_id: number) => {
 
     try{
 
-        // const deletedEpisodes = await pool.query(`
-        //         DELETE FROM media
-        //         WHERE series_id = $1
-        //         RETURNING *
-        //     `, [series_id])
-
-        const seletedEpisodes = await pool.query(`
-                SELECT *
-                FROM media
+        const deletedEpisodes = await pool.query(`
+                DELETE FROM media
                 WHERE series_id = $1
+                RETURNING *
             `, [series_id])
 
 
-
-        console.log("delete series episodes", series_id, seletedEpisodes.rows)
-
-
-
+        console.log("delete series episodes", series_id, deletedEpisodes.rows)
 
         const deletedImages =  (await Promise.all(
 
-            seletedEpisodes.rows.map(episode => 
+            deletedEpisodes.rows.map(episode => 
 
                 episodeImageDelete(episode.id)
             )
 
         )).flat()
 
-        
-
         return {
-            episodes: seletedEpisodes.rows,
+            episodes: deletedEpisodes.rows,
             images: deletedImages
         }
     
@@ -313,21 +285,16 @@ export const episodeImageDelete = async (media_id: number) => {
 
     try{ 
 
-        // const deletedImages = await pool.query(`
-        //         DELETE FROM images
-        //         WHERE movie_id = $1
-        //         RETURNING *  
-        //     `, [media_id])
-
-        const seletedImages = await pool.query(`
-                SELECT *
-                FROM images
-                WHERE movie_id = $1 
+        const deletedImages = await pool.query(`
+                DELETE FROM images
+                WHERE movie_id = $1
+                RETURNING *  
             `, [media_id])
 
-        console.log("episode image delete", media_id, seletedImages.rows);
 
-        return seletedImages.rows;
+        console.log("episode image delete", media_id, deletedImages.rows);
+
+        return deletedImages.rows;
 
     }catch(err){
 
@@ -435,7 +402,7 @@ export const deleteImage = async (imageId: number) => {
 
 
 
-export const updateImage = async (key: number, usage: string) => {
+export const updateImage = async (id: number, usage: string) => {
 
     let updatedImage;
 
@@ -445,13 +412,13 @@ export const updateImage = async (key: number, usage: string) => {
             SET usage = $2
             WHERE id = $1
             RETURNING *
-        `, [key, usage]);
+        `, [id, usage]);
     
     }catch(err){
 
-        throw new Error(`error when updating image usage on image ${key}, usage ${usage}`);
+        throw new Error(`error when updating image usage on image ${id}, usage ${usage}`);
     };
 
 
-    return updatedImage.rows[0] ? true : false
+    return updatedImage.rows[0]
 }

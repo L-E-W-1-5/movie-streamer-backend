@@ -3,6 +3,7 @@ import { type Movie, type Images, type S3File } from '../Types/Types.js';
 import { putImage } from '../util/putObject.js';
 import express, { type Express, type Request, type Response , type Application } from 'express';
 import { type MovieData } from '../Types/Types.js';
+import { deleteImageFromS3, deleteObject } from '../util/deleteObjects.js';
 
 
 
@@ -213,4 +214,47 @@ export const addToDatabase = async (req: Request, filePath: string | null = null
     data: movieDatabaseRecord,
     status: "success"
   };
+}
+
+
+
+export const deleteEntireSeries = async (series_id: number) => {
+
+  const seriesDbReturn = await mediaModel.deleteSeries(series_id); //deleting series and images from the database
+  
+      console.log("service - database return", seriesDbReturn);
+  
+      await Promise.all(
+  
+        seriesDbReturn.images.map(image => 
+  
+          deleteImageFromS3(image.key)
+        )
+      )
+  
+      const episodeDbReturn = await mediaModel.deleteSeriesEpisodes(series_id);
+  
+      console.log("service - deleted episodes", episodeDbReturn);
+  
+
+      await Promise.all(
+  
+        episodeDbReturn.episodes.map(episode => 
+  
+          deleteObject(episode.key)
+        )
+      )
+  
+      await Promise.all(
+  
+        episodeDbReturn.images.map(image => 
+  
+            deleteImageFromS3(image.key)     
+        )
+      )
+
+      return {
+        seriesDbReturn,
+        episodeDbReturn
+      }
 }
